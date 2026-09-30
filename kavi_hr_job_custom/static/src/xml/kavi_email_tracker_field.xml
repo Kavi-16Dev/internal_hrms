@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="kavi_hr_job_custom.KaviEmailTrackerField">
+        <div class="d-inline-flex align-items-center w-100 gap-2">
+            <t t-if="hasValue">
+                <a
+                    class="o_field_widget o_form_uri text-truncate"
+                    t-att-href="trackingUrl or ('mailto:' + emailValue)"
+                    t-att-data-tooltip="emailValue or trackingUrl"
+                    t-att-title="emailValue or trackingUrl"
+                    t-att-aria-label="emailValue or trackingUrl"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    t-esc="displayLabel"
+                />
+            </t>
+            <t t-else="">
+                <span class="text-muted">—</span>
+            </t>
+
+            <CopyButton
+                t-if="hasTrackingUrl"
+                className="'btn btn-link btn-sm p-0 flex-shrink-0'"
+                content="copyContent"
+                icon="'fa-link'"
+                successText="copySuccessText"
+            />
+        </div>
+    </t>
+
+</templates>

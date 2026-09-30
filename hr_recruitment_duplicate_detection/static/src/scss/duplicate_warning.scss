@@ -1,0 +1,103 @@
+/*
+ * Public recruitment duplicate-warning layout.
+ *
+ * The standard Odoo #warning-message contains the duplicate information
+ * returned by the recruitment form's redundant-field check (the yellow
+ * warning box).  Keep that warning intact and move it to the full-width row
+ * ABOVE the Apply button.
+ *
+ * The separate #s_website_form_result contains the custom red
+ * "Duplicate application blocked" message.  It is intentionally NOT hidden,
+ * removed, or replaced; it stays in the row below the yellow warning.
+ */
+#hr_recruitment_form .s_website_form_submit {
+    display: grid !important;
+    grid-template-columns: 200px minmax(max-content, auto) minmax(0, 1fr) !important;
+    column-gap: 1rem !important;
+    row-gap: 1rem !important;
+    align-items: start !important;
+    width: 100% !important;
+}
+
+/*
+ * Odoo's form-label spacer remains in the first column of the action row.
+ */
+#hr_recruitment_form .s_website_form_submit > div[style*="width: 200px"] {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 200px !important;
+}
+
+/*
+ * IMPORTANT:
+ * Move the existing yellow #warning-message to the full-width area above
+ * the Apply button. The message content itself is untouched.
+ */
+#hr_recruitment_form .s_website_form_submit #warning-message {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow-wrap: anywhere !important;
+}
+
+/*
+ * Keep the "I'm feeling lucky" button in the action row, below the yellow
+ * warning, and keep its existing appearance.
+ */
+#hr_recruitment_form .s_website_form_submit #apply-btn {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    justify-self: start !important;
+    display: inline-block !important;
+    clear: none !important;
+}
+
+/*
+ * Keep the red duplicate-blocked message visible in the action row below
+ * the yellow warning. This is NOT the warning that is being moved.
+ */
+#hr_recruitment_form .s_website_form_submit #s_website_form_result {
+    grid-column: 3 !important;
+    grid-row: 2 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 0 !important;
+    box-sizing: border-box !important;
+    overflow-wrap: anywhere !important;
+}
+
+/*
+ * Responsive layout: on small screens the warning remains above the button,
+ * while the button and red result message stack below it.
+ */
+@media (max-width: 767.98px) {
+    #hr_recruitment_form .s_website_form_submit {
+        grid-template-columns: 1fr !important;
+        row-gap: 1rem !important;
+    }
+
+    #hr_recruitment_form .s_website_form_submit #warning-message {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+    }
+
+    #hr_recruitment_form .s_website_form_submit > div[style*="width: 200px"] {
+        display: none !important;
+    }
+
+    #hr_recruitment_form .s_website_form_submit #apply-btn {
+        grid-column: 1 !important;
+        grid-row: 2 !important;
+        justify-self: start !important;
+    }
+
+    #hr_recruitment_form .s_website_form_submit #s_website_form_result {
+        grid-column: 1 !important;
+        grid-row: 3 !important;
+    }
+}

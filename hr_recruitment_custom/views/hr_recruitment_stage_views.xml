@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_recruitment_stage_form_inherit_legend" model="ir.ui.view">
+        <field name="name">hr.recruitment.stage.form.inherit.legend</field>
+        <field name="model">hr.recruitment.stage</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_recruitment_stage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='legend_done']" position="after">
+                <label for="legend_hold_2" string=" " class="o_status"/>
+                <field name="legend_hold_2" nolabel="1" readonly="False" required="True"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

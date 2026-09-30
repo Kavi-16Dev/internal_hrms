@@ -1,0 +1,146 @@
+<!-- <odoo>
+    <template id="report_offer_letter_standard">
+        <t t-name="hr_applicant.report_offer_letter">
+            <t t-call="web.html_container">
+                <t t-call="web.external_layout">
+                    <t t-foreach="docs" t-as="o">
+                        <!-- Main container with standard margins and 4-page layout logic -->
+                        <div class="page" style="font-size: 11pt; line-height: 1.6; color: #000; font-family: 'Arial', sans-serif; padding-left: 50px; padding-right: 50px;">
+                            
+                            <div class="oe_structure"/>
+
+                            <!-- PAGE 1: INTRODUCTION -->
+                            <div style="height: 900px;">
+                                <div class="row" style="margin-top: 40px; margin-bottom: 20px;">
+                                    <div class="col-8">
+                                        <p style="margin-bottom: 0;"><strong><span t-field="o.partner_name"/></strong></p>
+                                        <p>Chennai.</p>
+                                    </div>
+                                    <div class="col-4 text-right">
+                                        <p><strong>Date:</strong> <span t-field="o.x_studio_offer_date" t-options="{&quot;widget&quot;: &quot;date&quot;}"/></p>
+                                    </div>
+                                </div>
+
+                                <p style="margin-top: 30px;">Dear <span t-field="o.partner_name"/>,</p>
+
+                                <div style="text-align: center; margin-top: 50px; margin-bottom: 50px;">
+                                    <h3 style="font-weight: bold; text-decoration: underline; display: inline-block; font-size: 16pt;">OFFER LETTER</h3>
+                                </div>
+
+                                <p style="margin-bottom: 25px;">
+                                    Congratulations! We are delighted to offer you the position of <strong><span t-field="o.job_id.name"/></strong> at Kavi India. We look forward to the skills and experience you will bring to our team.
+                                </p>
+
+                                <p style="margin-bottom: 25px;">
+                                    Upon your acceptance of the offer, and subject to the completion of all pre-requisites to the satisfaction of the Company, your appointment shall be effective from the 
+                                    <strong><span t-field="o.x_studio_joining_date" t-options="{&quot;format&quot;: &quot;dd&quot;}"/><sup>th</sup> day of <span t-field="o.x_studio_joining_date" t-options="{&quot;format&quot;: &quot;MMMM yyyy&quot;}"/></strong>.
+                                </p>
+                                
+                                <p style="margin-bottom: 25px;">
+                                    You shall be reporting to <strong><span t-field="o.x_studio_manager"/></strong>, Director - Technology Service, effective your date of joining for all administrative and management functions.
+                                </p>
+
+                                <p>
+                                    The Employment terms below, which will be effective from your date of joining the Company as an employee, sets forth the terms and conditions under which Kavi Software Technologies Pvt Ltd would employ you.
+                                </p>
+                            </div>
+
+                            <div style="page-break-after: always;"/>
+
+                            <!-- PAGE 2: COMPENSATION (Image Style Table) -->
+                            <div style="height: 900px; padding-top: 20px;">
+                                <div style="font-weight: bold; text-decoration: underline; margin-bottom: 30px; font-size: 12pt; text-transform: uppercase;">Specific Terms of Employment</div>
+
+                                <p><strong>1. Compensation:</strong> Your compensation shall comprise of fixed emoluments the details of which are enlisted below:</p>
+                                
+                                <!-- Salary Container to force borders on the dynamic table from Studio -->
+                                <div style="margin-top: 30px; margin-bottom: 30px; width: 100%;">
+                                    <div style="border: 2px solid black; padding: 0;">
+                                        <!-- Note: If your Studio field is HTML, we wrap it. 
+                                             To get the exact look of your image, the field should contain a table. 
+                                             We apply a font-size reset here. -->
+                                        <div style="font-size: 10pt;">
+                                            <span t-field="o.x_studio_salary_structure"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 30px; border: 1px solid #eee; padding: 15px;">
+                                    <p><strong>Note:</strong></p>
+                                    <ul style="margin-left: 20px;">
+                                        <li style="margin-bottom: 15px;">12% of your Basic Salary will be deducted every month as your contribution to the Employee Provident Fund.</li>
+                                        <li style="margin-bottom: 15px;">Professional tax of Rs. 1,250 would be deducted on a half yearly basis from the net salary payable.</li>
+                                    </ul>
+                                </div>
+                                
+                                <p style="margin-top: 30px;">
+                                    The Compensation and terms shall be subject to review in accordance with the Company’s policies and statutory deductions as per applicable legislation.
+                                </p>
+                            </div>
+
+                            <div style="page-break-after: always;"/>
+
+                            <!-- PAGE 3: ROLES AND RESPONSIBILITIES -->
+                            <div style="height: 900px; padding-top: 20px;">
+                                <p><strong>2. Medical Insurance and Retirement Benefits:</strong> Eligible for medical insurance after completion of your probation period as per the prevailing policies of the Company.</p>
+
+                                <p style="margin-top: 30px;"><strong>3. Reimbursement of Expenses:</strong> Official expenditure incurred during your employment shall be eligible for reimbursement with prior approval.</p>
+
+                                <div style="margin-top: 40px;">
+                                    <p><strong>4. Key Roles and Responsibilities:</strong> The key roles and responsibilities relating to your function shall be in line with the following:</p>
+                                    <div style="margin-top: 20px; border-left: 3px solid #eee; padding-left: 20px;">
+                                        <!-- Dynamic roles from Studio -->
+                                        <span t-field="o.x_studio_roles_responsibilities"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="page-break-after: always;"/>
+
+                            <!-- PAGE 4: GENERAL TERMS & SIGNATURES -->
+                            <div style="padding-top: 20px;">
+                                <div style="font-weight: bold; text-decoration: underline; margin-bottom: 30px; font-size: 12pt; text-transform: uppercase;">General Terms and Conditions</div>
+                                
+                                <div style="margin-bottom: 40px;">
+                                    <p style="margin-bottom: 15px;"><strong>1. Working Hours:</strong> 9 hours a day (1:00 PM to 10:00 PM IST), 5 days a week.</p>
+                                    <p style="margin-bottom: 15px;"><strong>2. Leave Eligibility:</strong> Two leaves per month from the date of joining.</p>
+                                    <p style="margin-bottom: 15px;"><strong>3. Notice Period:</strong> 1 month notice period required from either side for termination.</p>
+                                    <p style="margin-bottom: 15px;"><strong>4. Retirement:</strong> Superannuation age is 58 years.</p>
+                                    <p style="margin-bottom: 15px;"><strong>5. Statute:</strong> Governed by the laws of India.</p>
+                                </div>
+
+                                <p style="margin-top: 40px;">
+                                    Please accept these terms within 2 days. Joining date: <strong><span t-field="o.x_studio_joining_date" t-options="{&quot;widget&quot;: &quot;date&quot;}"/></strong>.
+                                </p>
+
+                                <!-- Signature Section -->
+                                <div style="margin-top: 100px;">
+                                    <p>We welcome you and wish you a successful association with us.</p>
+                                    
+                                    <div class="row" style="margin-top: 80px;">
+                                        <div class="col-6">
+                                            <p>For <strong>Kavi Software Technologies Pvt Ltd</strong></p>
+                                            <div style="margin-top: 80px; border-top: 1px solid #000; width: 80%; padding-top: 10px;">
+                                                <p><strong><span t-field="o.x_studio_manager"/></strong></p>
+                                                <p style="font-size: 10pt;">Director - Technology Service</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <p>Accepted by:</p>
+                                            <div style="margin-top: 80px; border-top: 1px solid #000; width: 80%; padding-top: 10px;">
+                                                <p><strong><span t-field="o.partner_name"/></strong></p>
+                                                <p style="font-size: 10pt;">Candidate Signature</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="oe_structure"/>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo> -->

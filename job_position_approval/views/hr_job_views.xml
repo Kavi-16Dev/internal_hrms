@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Reusable header block is duplicated in both views below because
+         hr_recruitment ships two different hr.job form views
+         (a "simple" one used from the Recruitment dashboard, and the
+         classic one under Recruitment > Configuration > Job Positions). -->
+
+    <record id="custom_hr_job_simple_form_approval" model="ir.ui.view">
+        <field name="name">hr.job.form.approval.flow</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_job_simple_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//form/group" position="before">
+                <header>
+                    <button name="action_submit_for_approval" type="object"
+                            string="Submit for Approval" class="oe_highlight"
+                            invisible="approval_state != 'draft'"/>
+
+                    <button name="action_approve" type="object"
+                            string="Approve" class="oe_highlight"
+                            invisible="approval_state != 'submitted' or not is_current_user_approver"/>
+
+                    <button name="action_reject" type="object"
+                            string="Reject"
+                            invisible="approval_state != 'submitted' or not is_current_user_approver"
+                            confirm="Are you sure you want to reject this Job Position? It will be reset to Draft."/>
+
+                    <button name="action_request_unpublish" type="object"
+                            string="Position Filled - Notify Admin"
+                            invisible="approval_state != 'approved' or is_current_user_approver"/>
+
+                    <button name="action_close_unpublish" type="object"
+                            string="Close (Unpublish)" class="oe_highlight"
+                            invisible="approval_state != 'approved' or not is_current_user_approver"/>
+
+                    <button name="action_cancel" type="object"
+                            string="Cancel"
+                            invisible="approval_state in ('cancel', 'closed') or not is_current_user_approver"/>
+
+                    <!-- <button name="action_reset_to_draft" type="object"
+                            string="Reset to Draft"
+                            invisible="approval_state != 'cancel' or not is_current_user_approver"/> -->
+
+                    <button name="action_reset_to_draft" type="object" string="Reset to Draft"
+                            invisible="approval_state not in ('cancel', 'closed') or not is_current_user_approver"/>
+
+                    <field name="approval_state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,closed"/>
+                </header>
+            </xpath>
+
+            <xpath expr="//form/group" position="inside">
+                <field name="is_current_user_approver" invisible="1"/>
+                <group string="Approval" name="approval_info" invisible="not rejection_reason">
+                    <field name="rejection_reason" readonly="1"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="hr_job_form_approval" model="ir.ui.view">
+        <field name="name">hr.job.view.form.approval.flow</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_submit_for_approval" type="object"
+                            string="Submit for Approval" class="oe_highlight"
+                            invisible="approval_state != 'draft'"/>
+
+                    <button name="action_approve" type="object"
+                            string="Approve" class="oe_highlight"
+                            invisible="approval_state != 'submitted' or not is_current_user_approver"/>
+
+                    <button name="action_reject" type="object"
+                            string="Reject"
+                            invisible="approval_state != 'submitted' or not is_current_user_approver"
+                            confirm="Are you sure you want to reject this Job Position? It will be reset to Draft."/>
+
+                    <button name="action_request_unpublish" type="object"
+                            string="Position Filled - Notify Admin"
+                            invisible="approval_state != 'approved' or is_current_user_approver"/>
+
+                    <button name="action_close_unpublish" type="object"
+                            string="Close (Unpublish)" class="oe_highlight"
+                            invisible="approval_state != 'approved' or not is_current_user_approver"/>
+
+                    <button name="action_cancel" type="object"
+                            string="Cancel"
+                            invisible="approval_state in ('cancel', 'closed') or not is_current_user_approver"/>
+
+                    <!-- <button name="action_reset_to_draft" type="object" string="Reset to Draft"
+                            invisible="approval_state != 'cancel' or not is_current_user_approver"/> -->
+
+                     <button name="action_reset_to_draft" type="object" string="Reset to Draft"
+                            invisible="approval_state not in ('cancel', 'closed') or not is_current_user_approver"/>   
+
+                    <field name="approval_state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,closed"/>
+                </header>
+            </xpath>
+
+            <xpath expr="//sheet" position="inside">
+                <field name="is_current_user_approver" invisible="1"/>
+                <group string="Approval" name="approval_info"
+                       invisible="not rejection_reason">
+                    <field name="rejection_reason" readonly="1"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

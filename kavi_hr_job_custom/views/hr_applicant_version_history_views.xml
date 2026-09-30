@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    
+    <record id="view_kavi_applicant_version_history_list" model="ir.ui.view">
+        <field name="name">hr.applicant.version.history.list</field>
+        <field name="model">hr.applicant.version.history</field>
+        <field name="arch" type="xml">
+            <list string="Version History" create="false" edit="false"
+                  delete="false" default_order="changed_on desc">
+                <field name="changed_on" string="Date &amp; Time"/>
+                <field name="changed_by" string="Changed By"/>
+                <field name="field_label" string="Field Changed"/>
+                <field name="old_value_text" string="Previous Value"/>
+                <field name="new_value_text" string="New Value"/>
+                <button name="action_view_version_history_detail" type="object"
+                        string="View Version History" class="btn-link"
+                        icon="fa-history"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Detail form: full rendered HTML, Previous Value / New Value tabs.
+         Optional - only reached if the user clicks into a row. -->
+    <record id="view_kavi_applicant_version_history_form" model="ir.ui.view">
+        <field name="name">hr.applicant.version.history.form</field>
+        <field name="model">hr.applicant.version.history</field>
+        <field name="arch" type="xml">
+            <form string="Version Detail" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="d-flex justify-content-end mb-3">
+                        <button name="action_back_to_version_history_list" type="object"
+                                string="View Version History" class="btn-secondary"
+                                icon="fa-history"/>
+                    </div>
+                    <group>
+                        <field name="field_label" string="Field Changed"/>
+                        <field name="changed_on" string="Changed On"/>
+                        <field name="changed_by" string="Changed By"/>
+                    </group>
+                    <notebook>
+                        <page string="Previous Value">
+                            <field name="old_value" readonly="1" nolabel="1"/>
+                        </page>
+                        <page string="New Value">
+                            <field name="new_value" readonly="1" nolabel="1"/>
+                        </page>
+                    </notebook>
+                    <div class="mt-3">
+                        <button name="action_discard_version_history_detail" type="object"
+                                string="Discard" class="btn-secondary"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

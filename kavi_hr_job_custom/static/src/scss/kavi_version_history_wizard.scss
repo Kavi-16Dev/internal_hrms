@@ -1,0 +1,187 @@
+// ============================================================================
+// Styles the "Menu" (hr.job) / "Salary" (hr.applicant) dropdown once it has
+// been moved (in JS) into the dialog's own `.modal-header`, immediately to
+// the right of the "Version History" title text - matching the spot the
+// user circled in red on the popup header.
+//
+// The actual relocation into `.modal-header` is done in JS, not CSS - see
+// static/src/js/kavi_version_history_wizard_header_menu.js for why a pure
+// CSS `position: absolute` approach does not work (it gets clipped by
+// `.modal-body`'s `overflow-y: auto`).
+// ============================================================================
+.o_kavi_vh_header_menu {
+    // Same gap the footer uses between its own buttons (Bootstrap's
+    // `.modal-footer` default gap), so the header reads consistently
+    // with the footer button row.
+    margin-inline-start: 12px;
+
+    // Sits inline in the header's flex row (Bootstrap's `.modal-header` is
+    // already `display: flex; align-items: center`), without stretching.
+    flex: 0 0 auto;
+
+    .dropdown-toggle {
+        // Full-size button, same as the footer's Restore/Discard buttons -
+        // no compact override, so it visually matches them.
+        display: inline-flex;
+        align-items: center;
+    }
+}
+
+// The title itself should no longer stretch/justify-content push the
+// header's other content away now that the dropdown sits right after it.
+.modal-header:has(.o_kavi_vh_header_menu) .modal-title {
+    flex: 0 0 auto;
+}
+
+// ============================================================================
+// Avatar-badge timeline (kavi_timeline_radio widget) - the left-hand list
+// of past versions, matching the reference "Task Description History"
+// image: a connecting vertical line, a dot per entry (filled/caret for the
+// selected one), the date/time, and a colored initial-letter avatar badge.
+// ============================================================================
+.o_kavi_timeline {
+    .o_kavi_timeline_item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .o_kavi_timeline_marker {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        flex: 0 0 24px;
+    }
+
+    // Connecting line between one dot and the next.
+    .o_kavi_timeline_item:not(:last-child) .o_kavi_timeline_marker::after {
+        content: "";
+        position: absolute;
+        top: 24px;
+        left: 50%;
+        width: 1px;
+        height: 26px;
+        background-color: #dee2e6;
+        transform: translateX(-50%);
+    }
+
+    .o_kavi_timeline_dot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background-color: #adb5bd;
+        color: #fff;
+        font-size: 10px;
+        flex: 0 0 auto;
+    }
+
+    .o_kavi_timeline_item_selected .o_kavi_timeline_dot {
+        width: 22px;
+        height: 22px;
+        background-color: #6f42c1;
+    }
+
+    // "Done" = newer than the selected entry, i.e. already passed going
+    // down the list - a smaller, lighter-purple filled dot with a
+    // checkmark, matching the reference image's rows above the current
+    // selection.
+    .o_kavi_timeline_item_done .o_kavi_timeline_dot {
+        background-color: #b8a1e3;
+        font-size: 9px;
+    }
+
+    // "Pending" = older than the selected entry, not reached yet - the
+    // default hollow/gray dot with a dash, matching the reference
+    // image's rows below the current selection. (This is really just
+    // the base .o_kavi_timeline_dot styling above; the class is kept
+    // for clarity/future overrides.)
+    .o_kavi_timeline_item_pending .o_kavi_timeline_dot {
+        background-color: #adb5bd;
+    }
+
+    .o_kavi_timeline_label {
+        flex-grow: 1;
+        font-size: 0.85rem;
+        color: #495057;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .o_kavi_timeline_item_selected .o_kavi_timeline_label {
+        color: #6f42c1;
+        font-weight: 600;
+    }
+
+    .o_kavi_timeline_avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        flex: 0 0 auto;
+    }
+}
+
+// Info banner shown at the top of the popup's right-hand content column,
+// e.g. "Showing the document as it was on ... submitted by ...", with
+// the "View comparison" toggle sitting on its right edge - matching the
+// reference image's blue info row exactly (icon + sentence on the left,
+// button on the right, all inside one rounded box).
+.o_kavi_vh_snapshot_banner {
+    background-color: #eef6fc;
+    border: 1px solid #d6eaf5;
+    border-radius: 4px;
+    padding: 8px 12px;
+
+    .fa-info-circle {
+        color: #3b82c4;
+    }
+}
+
+// Bordered box the selected version's content (or the Previous/New
+// Value pair in comparison mode) sits in, matching the plain-bordered
+// text area in the reference image.
+.o_kavi_vh_value_box {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px 14px;
+    min-height: 56px;
+}
+
+// Shown instead of the field's content when a version's value was
+// actually empty at the time it was recorded (e.g. the very first
+// entry, before the field had ever been filled in) - matches the
+// reference image's italic "The task description was empty at the
+// time." placeholder.
+.o_kavi_vh_value_empty {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+// Diff-view highlighting (default view of the popup) - the current
+// value in green, immediately followed by the selected historical
+// value struck through in red/pink, matching the reference image's
+// inline highlighted text exactly (no gap between the two spans).
+.o_kavi_vh_diff_added {
+    background-color: #d4f4dd;
+    color: #1e7e34;
+}
+
+.o_kavi_vh_diff_removed {
+    background-color: #fbe2e3;
+    color: #b02a37;
+    text-decoration: line-through;
+}

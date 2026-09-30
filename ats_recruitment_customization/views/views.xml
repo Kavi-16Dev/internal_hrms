@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_applicant_form_inherit_offer_letter_components" model="ir.ui.view">
+        <field name="name">hr.applicant.form.offer.letter.components</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            
+            <xpath expr="//field[@name='department_id']" position="after">
+                <field name="job_address"/>
+                <!-- <field name="company_name"/> -->
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Offer Letter Components">
+
+                    <group>
+                        <!-- <group string="Candidate Details">
+                            <field name="partner_name"/>
+                            <field name="email_from"/>
+                            <field name="partner_phone"/>
+                            <field name="job_id"/>
+                            <field name="user_id" string="Recruiter"/>
+                        </group> -->
+
+                        <group string="Offer Details">
+                            <field name="offer_date"/>
+                            <field name="joining_date"/>
+                            <!-- <field name="manager_name"/> -->
+                            <field name="stage_id"/>
+                        </group>
+                        <group>
+                            <!-- <field name="compensation"/> -->
+                            <!-- <field name="medical_retirement_benefits"/>
+                            <field name="reimbursement_of_expenses"/>
+                            <field name="terms_and_conditions"/>
+                            <field name="right_to_transfer"/>
+                            <field name="company_policies"/>
+                            <field name="maintain_confidentiality"/> -->
+                        </group>
+                    </group>
+
+                    <group string="Salary Structure">
+                        <field name="salary_structure" widget="html"/>
+                        <field name="salary_note" widget="html"/>
+                        
+                    </group>
+
+                    <!-- <group string="Roles &amp; Responsibilities">
+                        <field name="roles_responsibilities" widget="html"/>
+                    </group> -->
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

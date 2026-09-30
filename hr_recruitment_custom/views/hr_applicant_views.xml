@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_applicant_form_inherit_kanban_state" model="ir.ui.view">
+        <field name="name">hr.applicant.form.inherit.kanban.state</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <!--
+                The standard Odoo 19 form already loads the four built-in
+                tooltip fields. Load the fifth custom tooltip as well so the
+                Interviewer Status widget can dynamically display its label.
+            -->
+            <xpath expr="//field[@name='legend_done']" position="after">
+                <field name="legend_hold_2" invisible="1"/>
+            </xpath>
+
+            <!--
+                Keep the existing Interviewer Status field and its UI wrapper.
+                The custom widget is based on Odoo's SelectionField, so the
+                field remains a Selection and looks/behaves like the existing
+                selection UI, while its labels are read from the current
+                stage's legend_* fields.
+            -->
+            <xpath expr="//field[@name='kanban_state']" position="replace">
+                <div class="d-flex justify-content-end align-items-center gap-2">
+                    <label for="kanban_state" string="Status" class="mb-0"/>
+                    <field name="kanban_state" widget="interviewer_status_selection" nolabel="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

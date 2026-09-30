@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    
+    <delete model="ir.actions.act_window" id="action_version_history_hr_job"/>
+
+   
+    <record id="action_version_history_hr_job" model="ir.actions.server">
+        <field name="name">Version History (Legacy Popup)</field>
+        <field name="model_id" ref="hr.model_hr_job"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_open_job_version_history()</field>
+        <field name="group_ids" eval="[(6, 0, [
+            ref('hr_recruitment.group_hr_recruitment_user'),
+            ref('hr_recruitment.group_hr_recruitment_manager'),
+            ref('kavi_hr_job_custom.group_hr_recruitment_hiring_manager'),
+        ])]"/>
+       
+        <field name="binding_model_id" eval="False"/>
+    </record>
+
+   
+
+   
+    <delete model="ir.actions.act_window" id="action_version_history_hr_applicant"/>
+
+   
+    <record id="action_version_history_hr_applicant" model="ir.actions.server">
+        <field name="name">Version History (Legacy Popup)</field>
+        <field name="model_id" ref="hr_recruitment.model_hr_applicant"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_open_applicant_version_history()</field>
+        <field name="group_ids" eval="[(6, 0, [
+            ref('hr_recruitment.group_hr_recruitment_user'),
+            ref('hr_recruitment.group_hr_recruitment_manager'),
+            ref('kavi_hr_job_custom.group_hr_recruitment_hiring_manager'),
+        ])]"/>
+       
+        <field name="binding_model_id" eval="False"/>
+    </record>
+
+    
+    <record id="action_kavi_backfill_version_history" model="ir.actions.server">
+        <field name="name">Backfill Version History (Run Once)</field>
+        <field name="model_id" ref="hr.model_hr_job"/>
+        <field name="state">code</field>
+        <field name="code">
+Job = env['hr.job'].sudo()
+JobHistory = env['hr.job.version.history'].sudo()
+jobs_without_history = Job.search([('job_version_history_ids', '=', False)])
+for job in jobs_without_history:
+    JobHistory.create({
+        'job_id': job.id,
+        'field_name': '__baseline__',
+        'field_label': 'Job Position Created',
+        'old_value': '',
+        'new_value': job.name or '',
+    })
+
+Applicant = env['hr.applicant'].sudo()
+ApplicantHistory = env['hr.applicant.version.history'].sudo()
+applicants_without_history = Applicant.search([('applicant_version_history_ids', '=', False)])
+for applicant in applicants_without_history:
+    ApplicantHistory.create({
+        'applicant_id': applicant.id,
+        'field_name': '__baseline__',
+        'field_label': 'Applicant Created',
+        'old_value': '',
+        'new_value': applicant.partner_name or applicant.display_name or '',
+    })
+
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Version History Backfilled',
+        'message': 'Every Job Position and Applicant that had no '
+                    'Version History yet now has a baseline entry.',
+        'type': 'success',
+        'sticky': False,
+    },
+}
+        </field>
+    </record>
+
+   
+
+</odoo>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         Marker subtype used ONLY to tag chatter messages created by our
+         manual Html-field tracking below (models/hr_job.py write()).
+         Html fields cannot use Odoo's native tracking=True (it raises
+         NotImplementedError for html/text fields), so we log these
+         changes ourselves and use this subtype to identify/filter them
+         in the Version History list, instead of tracking_value_ids
+         (which will never exist for these fields).
+         internal=True hides it from the normal "Log note / Followers"
+         subtype picker - it's purely an internal marker.
+         ================================================================ -->
+    <record id="mail_message_subtype_version_history" model="mail.message.subtype">
+        <field name="name">Version History</field>
+        <field name="res_model">hr.job</field>
+        <field name="internal">True</field>
+    </record>
+
+    <!-- Same marker subtype, used by the hr.applicant write() override in
+         models/hr_applicant.py for salary_structure / confidential_notes. -->
+    <record id="mail_message_subtype_applicant_version_history" model="mail.message.subtype">
+        <field name="name">Version History</field>
+        <field name="res_model">hr.applicant</field>
+        <field name="internal">True</field>
+    </record>
+
+</odoo>

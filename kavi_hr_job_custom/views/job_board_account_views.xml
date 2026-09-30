@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_job_board_account_list" model="ir.ui.view">
+        <field name="name">hr.job.board.account.list</field>
+        <field name="model">hr.job.board.account</field>
+        <field name="arch" type="xml">
+            <list string="Job Board Accounts">
+                <field name="name"/>
+                <field name="job_board_id"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'connected'"
+                       decoration-danger="state == 'error'"
+                       decoration-muted="state == 'not_connected'"/>
+                <field name="last_connection_date"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hr_job_board_account_form" model="ir.ui.view">
+        <field name="name">hr.job.board.account.form</field>
+        <field name="model">hr.job.board.account</field>
+        <field name="arch" type="xml">
+            <form string="Job Board Account">
+                <header>
+                    <button name="action_test_connection" type="object"
+                            string="Test Connection" class="btn-primary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="not_connected,connected"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="job_board_id"/>
+                            <field name="name" placeholder="e.g. Adzuna - India"/>
+                           
+                            <field name="provider" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="last_connection_date" readonly="1"/>
+                            <field name="last_connection_message" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Credentials">
+                            <group>
+                                <group string="Adzuna" invisible="provider != 'adzuna'">
+                                    <field name="app_id"/>
+                                    <field name="api_key"/>
+                                    <field name="locale" string="Country Code (e.g. gb, in, us)"/>
+                                </group>
+                                <group string="Careerjet" invisible="provider != 'careerjet'">
+                                    <field name="affiliate_id"/>
+                                    <field name="locale" string="Locale (e.g. en_GB)"/>
+                                </group>
+                                <group string="WhatJobs" invisible="provider != 'whatjobs'">
+                                    <field name="publisher_id"/>
+                                    <field name="api_key"/>
+                                </group>
+                                <group string="Talent.com" invisible="provider != 'talent'">
+                                    <field name="partner_id"/>
+                                    <field name="api_key"/>
+                                </group>
+                                <group string="LinkedIn Basic" invisible="provider != 'linkedin_basic'">
+                                    <field name="company_page_url"/>
+                                    <field name="feed_url"/>
+                                </group>
+                                <group string="Google" invisible="provider != 'google'">
+                                    <field name="feed_url"/>
+                                    <field name="api_key"/>
+                                    <field name="client_id"/>
+                                    <field name="client_secret" password="True"/>
+                                    <field name="service_account_json"/>
+                                </group>
+                            </group>
+                            <group string="Generic / Other Authentication"
+                                   invisible="provider not in ('linkedin_basic', 'google')">
+                                <field name="username"/>
+                                <field name="password" password="True"/>
+                                <field name="access_token" password="True"/>
+                                <field name="refresh_token" password="True"/>
+                            </group>
+                            <div class="alert alert-warning" role="alert"
+                                 invisible="not name or provider">
+                                Odoo could not recognize a known provider in this
+                                Account Name. Make sure it contains one of: Adzuna,
+                                Careerjet, WhatJobs, Talent.com, LinkedIn Basic or
+                                Google (e.g. "Adzuna - India").
+                            </div>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+   
+    <record id="action_hr_job_board_account" model="ir.actions.act_window">
+        <field name="name">Job Board Accounts</field>
+        <field name="res_model">hr.job.board.account</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Connect a Job Board account
+            </p>
+            <p>
+                Store the credentials Odoo needs to post jobs to Adzuna,
+                Careerjet, WhatJobs, Talent.com, LinkedIn Basic or Google.
+            </p>
+        </field>
+    </record>
+</odoo>

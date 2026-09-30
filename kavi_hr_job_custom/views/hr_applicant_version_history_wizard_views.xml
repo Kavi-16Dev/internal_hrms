@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    
+    <record id="view_kavi_applicant_version_history_wizard_form" model="ir.ui.view">
+        <field name="name">hr.applicant.version.history.wizard.form</field>
+        <field name="model">hr.applicant.version.history.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Version History">
+                <field name="applicant_id" invisible="1"/>
+                <field name="field_snapshot_view" invisible="1"/>
+                <field name="snapshot_field_name" invisible="1"/>
+               
+                <div class="dropdown o_kavi_vh_header_menu" invisible="field_snapshot_view">
+                    <button type="button" class="btn btn-secondary dropdown-toggle"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        Salary
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" role="menu">
+                        <li>
+                            <button name="action_view_salary_structure" type="object"
+                                    class="dropdown-item" role="menuitem"
+                                    string="Salary Structure"/>
+                        </li>
+                        <li>
+                            <button name="action_view_confidential_notes" type="object"
+                                    class="dropdown-item" role="menuitem"
+                                    string="Confidential Notes"/>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="o_kavi_version_history_wizard d-flex" style="min-height: 420px;">
+
+                   
+                    <div class="o_kavi_vh_timeline pe-4" style="width: 280px; border-right: 1px solid #dee2e6;">
+                        <field name="history_id" widget="kavi_timeline_radio" nolabel="1" string="Select Version"/>
+                    </div>
+
+                    <!-- Right column: content of the selected version -->
+                    <div class="o_kavi_vh_content flex-grow-1 ps-4">
+
+                       
+                        <field name="preview_field_label" invisible="1"/>
+                        <field name="is_latest_version" invisible="1"/>
+
+                       
+                        <div class="o_kavi_vh_snapshot_banner d-flex align-items-center mb-3"
+                             invisible="history_id">
+                            <i class="fa fa-info-circle me-1"/>
+                            <span>No changes have been recorded yet for
+                                <field name="preview_field_label" nolabel="1" class="d-inline mx-1"/>.
+                            </span>
+                        </div>
+                        <div class="o_kavi_vh_value_box o_kavi_vh_value_empty" invisible="history_id">
+                            <span>Once this field is edited and saved, its version history will appear here.</span>
+                        </div>
+
+                        <div invisible="not history_id">
+                            <div class="o_kavi_vh_snapshot_banner d-flex justify-content-between align-items-center mb-3"
+                                 invisible="show_comparison">
+                                <div>
+                                    <i class="fa fa-info-circle me-1"/>
+                                    <span>Showing all differences between the current version and the selected one updated by</span>
+                                    <field name="preview_changed_by" nolabel="1" class="d-inline mx-1"/>
+                                    <span>on</span>
+                                    <field name="preview_changed_on" nolabel="1" class="d-inline mx-1"/>
+                                </div>
+                                <button name="action_toggle_comparison" type="object"
+                                        string="View content" class="btn-secondary"
+                                        icon="fa-eye" invisible="is_latest_version"/>
+                            </div>
+
+                            <div class="o_kavi_vh_snapshot_banner d-flex justify-content-between align-items-center mb-3"
+                                 invisible="not show_comparison">
+                                <div>
+                                    <i class="fa fa-info-circle me-1"/>
+                                    <span>Showing the document as it was on</span>
+                                    <field name="preview_changed_on" nolabel="1" class="d-inline mx-1"/>
+                                    <span>, submitted by</span>
+                                    <field name="preview_changed_by" nolabel="1" class="d-inline mx-1"/>
+                                </div>
+                                <button name="action_toggle_comparison" type="object"
+                                        string="View comparison" class="btn-secondary"
+                                        icon="fa-exchange"/>
+                            </div>
+
+                            <field name="preview_empty_message" invisible="1"/>
+                            <field name="diff_html" invisible="1"/>
+
+                            <!-- Diff mode content -->
+                            <div invisible="show_comparison">
+                                <div class="o_kavi_vh_value_box" invisible="not diff_html">
+                                    <field name="diff_html" nolabel="1" readonly="1"/>
+                                </div>
+                                <div class="o_kavi_vh_value_box o_kavi_vh_value_empty" invisible="diff_html">
+                                    <span>This is the current version, nothing to compare.</span>
+                                </div>
+                            </div>
+
+                           
+                            <div invisible="not show_comparison">
+                                <div class="o_kavi_vh_value_box" invisible="not preview_new_value">
+                                    <field name="preview_new_value" nolabel="1" readonly="1"/>
+                                </div>
+                                <div class="o_kavi_vh_value_box o_kavi_vh_value_empty" invisible="preview_new_value">
+                                    <field name="preview_empty_message" nolabel="1" readonly="1"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer>
+                    <field name="is_latest_version" invisible="1"/>
+                    <button name="action_restore_history" type="object"
+                            string="Restore history" class="btn-primary"
+                            readonly="is_latest_version or not history_id"/>
+                    <button name="action_discard" type="object"
+                            string="Discard" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

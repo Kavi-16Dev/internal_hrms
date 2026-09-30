@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_applicant_form_offer_approval" model="ir.ui.view">
+        <field name="name">hr.applicant.form.offer.approval</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="priority" eval="10"/>
+        <field name="arch" type="xml">
+
+            <!-- Hidden helper fields -->
+            <xpath expr="//header" position="inside">
+                <field name="is_offer_submission_stage" invisible="1"/>
+                <field name="is_offer_approval_stage" invisible="1"/>
+                <field name="can_approve_offer" invisible="1"/>
+            </xpath>
+
+            <!-- Offer Letter Components Tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Offer Letter Components" name="offer_letter_components">
+
+                    <!-- Invisible helper fields -->
+                    <field name="is_offer_submission_stage" invisible="1"/>
+                    <field name="is_offer_approval_stage" invisible="1"/>
+                    <field name="can_approve_offer" invisible="1"/>
+
+                    <!-- Buttons -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:15px;">
+
+    <!-- Left -->
+                <div>
+                    <button name="action_submit_offer"
+                            string="Submit"
+                            type="object"
+                            class="btn btn-primary"
+                            invisible="not is_offer_submission_stage or offer_approval_state not in ('draft','rejected')"/>
+
+                    <button name="action_reset_to_draft_offer"
+                            string="Reset to Draft"
+                            type="object"
+                            class="btn btn-secondary"
+                            invisible="not (is_offer_submission_stage or is_offer_approval_stage) or offer_approval_state not in ('submitted', 'approved')"/>
+
+                    <button name="action_approve_offer"
+                            string="Approve"
+                            type="object"
+                            class="btn btn-success"
+                            invisible="not is_offer_submission_stage or offer_approval_state != 'submitted' or not can_approve_offer"/>
+
+                    <button name="action_reject_offer"
+                            string="Reject"
+                            type="object"
+                            class="btn btn-danger"
+                            invisible="not is_offer_submission_stage or offer_approval_state != 'submitted' or not can_approve_offer"/>
+                </div>
+
+                <!-- Right -->
+                <div style="margin-left:auto;">
+                    <field name="offer_approval_state"
+                        widget="statusbar"
+                        statusbar_visible="draft,submitted,approved,rejected"/>
+                </div>
+
+            </div>
+
+                    <group>
+    <!-- Left -->
+                        <group string="Offer Details">
+                            <field name="offer_date"/>
+
+                            <field name="joining_date"
+                                readonly="offer_approval_state in ('submitted', 'approved')"/>
+
+                            <!-- <field name="offer_designation_id"
+                                readonly="offer_approval_state in ('submitted', 'approved')"/> -->
+                        </group>
+
+                        <!-- Right -->
+                        <group string="Salary Structure">
+
+                            <field name="offer_salary_structure"
+                                readonly="offer_approval_state in ('submitted', 'approved')"/>
+
+                            <field name="offer_note"/>
+
+                        </group>
+                    </group>
+
+                    <group string="Approval Trail"
+                           invisible="not offer_submitted_by_id">
+                        <field name="offer_submitted_by_id" readonly="1"/>
+                    </group>
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_template_vendor_tracker_link" model="mail.template">
+        <field name="name">Vendor: Job Tracker Link</field>
+        <field name="model_id" ref="model_hr_job_vendor_tracker_link"/>
+        <field name="subject">New Job Opening: {{ object.job_id.name }}</field>
+        <field name="email_to">{{ object.vendor_id.email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; font-size: 14px;">
+                <p>Dear <t t-out="object.vendor_id.name"/>,</p>
+                <p>
+                    A new job opening, <strong t-out="object.job_id.name"/>, has been
+                    assigned to you. Please use the Email address below for this Job Position:
+                </p>
+                <p>
+                    <a t-attf-href="{{ object.email_url }}" t-out="object.email_address"/>
+                </p>
+                <p>Regards,<br/>Recruitment Team</p>
+            </div>
+        </field>
+        <field name="auto_delete">False</field>
+    </record>
+
+    <!-- Portal Access Granted: sent from res.users.write() (see
+         models/res_users.py) whenever a linked user's Portal group
+         membership actually changes from "no portal" to "portal".
+         Covers Vendor creation, Contact Person auto-provisioning, and any
+         manual Portal Access grant, since they all end up writing on
+         res.users. -->
+    <record id="mail_template_portal_access_granted" model="mail.template">
+        <field name="name">Portal Access Granted</field>
+        <field name="model_id" ref="base.model_res_users"/>
+        <field name="subject">Portal Access Granted</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333333;">
+                <p style="font-size: 12px; color: #888888; margin-bottom: 4px;">Your Account</p>
+                <h2 style="margin-top: 0;" t-out="object.partner_id.name or object.login"/>
+                <hr style="border: none; border-top: 1px solid #e0e0e0;"/>
+                <p>Dear <t t-out="object.partner_id.name or object.login"/>,</p>
+                <p>
+                    Portal access has been granted to your account
+                    (<strong t-out="object.login"/>) at
+                    <t t-out="object.company_id.name"/>. You can now log in to
+                    the Portal to view and manage your information.
+                </p>
+                <p>
+                    <a t-attf-href="{{ object.company_id.get_base_url() }}/web/login"
+                       style="background-color: #714B67; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px; display: inline-block;">
+                        Log In to Portal
+                    </a>
+                </p>
+                <p>If you did not expect this change, please contact us immediately.</p>
+                <hr style="border: none; border-top: 1px solid #e0e0e0;"/>
+                <p style="font-size: 12px; color: #888888;" t-out="object.company_id.name"/>
+            </div>
+        </field>
+        <field name="auto_delete">False</field>
+    </record>
+
+    <!-- Portal Access Revoked: sent from the same res.users.write() hook
+         whenever a linked user's Portal group membership changes from
+         "portal" to "no portal" (Vendor/Contact deactivation or any
+         manual Portal Access revoke). -->
+    <record id="mail_template_portal_access_revoked" model="mail.template">
+        <field name="name">Portal Access Revoked</field>
+        <field name="model_id" ref="base.model_res_users"/>
+        <field name="subject">Portal Access Revoked</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333333;">
+                <p style="font-size: 12px; color: #888888; margin-bottom: 4px;">Your Account</p>
+                <h2 style="margin-top: 0;" t-out="object.partner_id.name or object.login"/>
+                <hr style="border: none; border-top: 1px solid #e0e0e0;"/>
+                <p>Dear <t t-out="object.partner_id.name or object.login"/>,</p>
+                <p>
+                    Your Portal access for the account (<strong t-out="object.login"/>)
+                    at <t t-out="object.company_id.name"/> has been revoked. You will no
+                    longer be able to log in to the Portal.
+                </p>
+                <p>If you believe this is a mistake, please contact us.</p>
+                <hr style="border: none; border-top: 1px solid #e0e0e0;"/>
+                <p style="font-size: 12px; color: #888888;" t-out="object.company_id.name"/>
+            </div>
+        </field>
+        <field name="auto_delete">False</field>
+    </record>
+</odoo>

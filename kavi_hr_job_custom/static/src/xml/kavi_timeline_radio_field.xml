@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="kavi_hr_job_custom.TimelineRadioField">
+        <div class="o_kavi_timeline">
+            <t t-foreach="state.options" t-as="opt" t-key="opt.id">
+                <t t-set="rowState" t-value="this.rowState(opt.id)"/>
+                <div class="o_kavi_timeline_item"
+                     t-att-class="{
+                        'o_kavi_timeline_item_selected': rowState === 'current',
+                        'o_kavi_timeline_item_done': rowState === 'done',
+                        'o_kavi_timeline_item_pending': rowState === 'pending',
+                     }"
+                     t-on-click="() => this.onSelect(opt.id)">
+                    <div class="o_kavi_timeline_marker">
+                        <span class="o_kavi_timeline_dot">
+                            <i t-if="rowState === 'current'" class="fa fa-caret-right"/>
+                            <i t-elif="rowState === 'done'" class="fa fa-check"/>
+                            <i t-else="" class="fa fa-minus"/>
+                        </span>
+                    </div>
+                    <div class="o_kavi_timeline_label" t-att-title="opt.dateLabel">
+                        <t t-esc="opt.dateLabel"/>
+                    </div>
+                    <span class="o_kavi_timeline_avatar"
+                          t-att-style="'background-color:' + opt.color"
+                          t-att-title="opt.userName">
+                        <t t-esc="opt.initial"/>
+                    </span>
+                </div>
+            </t>
+            <div t-if="!state.options.length" class="text-muted small py-2">
+                No recorded changes yet.
+            </div>
+        </div>
+    </t>
+
+</templates>

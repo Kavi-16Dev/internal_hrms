@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+   
+
+    <record id="view_hr_applicant_form_kavi_custom" model="ir.ui.view">
+        <field name="name">hr.applicant.form.kavi.custom</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- 1) Portfolio Link, right under LinkedIn Profile -->
+            <xpath expr="//field[@name='linkedin_profile']" position="after">
+                <field name="portfolio_link" placeholder="e.g. https://myportfolio.com" widget="url"/>
+            </xpath>
+
+            <!-- 1b) Job Board -> Source restriction. There is no
+                 separate "Job Board" field anymore: the stock Source
+                 field itself is restricted to only the Source(s) that
+                 correspond to the Job Boards configured on the Applied
+                 Job (job_board_source_ids, computed in
+                 models/hr_applicant.py from job_id.job_board_ids). When
+                 the Applied Job has no Job Boards configured, Source is
+                 left unrestricted. -->
+            <xpath expr="//field[@name='job_id']" position="after">
+                <field name="job_board_source_ids" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='source_id']" position="attributes">
+                <attribute name="domain">[('id', 'in', job_board_source_ids)]</attribute>
+            </xpath>
+
+            <!-- 2) Applicant Details: Total Experience, Current Organization,
+                 Current Location, Notice Period -->
+            <!-- <xpath expr="//page[@name='application_details']" position="inside">
+                <group string="Applicant Details">
+                    <field name="total_experience" placeholder="e.g. 5"/>
+                    <field name="current_organization"/>
+                    <field name="current_location"/>
+                    <field name="notice_period" placeholder="e.g. 30 Days"/>
+                </group>
+            </xpath> -->
+            <xpath expr="//field[@name='availability']" position="after">
+
+                <field name="total_experience"/>
+
+                <field name="current_organization"/>
+
+                <field name="current_location"/>
+
+                <field name="notice_period"/>
+
+            </xpath>
+
+
+            <!-- 3) Offer Letter page - Recruitment Access + Hiring Manager only -->
+            <xpath expr="//field[@name='department_id']" position="after">
+                <!-- <field name="job_address"/> -->
+            </xpath>
+            <xpath expr="//field[@name='joining_date']" position="after">
+                <field name="designation"/>
+            </xpath>
+
+            <xpath expr="//page[@name='application_details']" position="after">
+                
+                <page name="resume" string="Resume">
+                    <field name="id" invisible="1"/>
+                    <separator string="Resume" class="mb-4"/>
+                    <field mode="list" nolabel="1" name="resume_line_ids" widget="resume_one2many"
+                           context="{'default_applicant_id': id}">
+                        <list>
+                            <field name="line_type_id"/>
+                            <field name="name"/>
+                            <field name="description"/>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="is_course"/>
+                            <field name="duration"/>
+                            <field name="external_url"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+
+            <xpath expr="//page[@name='application_details']" position="after">
+                <!-- <page string="Offer Letter" name="kavi_offer_letter_page"
+                      groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager,kavi_hr_job_custom.group_hr_recruitment_hiring_manager">
+                    <group> -->
+                        <!-- <group>
+                            <field name="designation"/>
+                            <field name="joining_date"/>
+                        </group> -->
+                    <!-- </group> -->
+                  
+                   
+                <!-- </page> -->
+
+                <!-- 4) Confidential Notes - new page, same restricted audience -->
+                <page string="Confidential Notes" name="kavi_confidential_notes_page"
+                      groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager,kavi_hr_job_custom.group_hr_recruitment_hiring_manager">
+                    <field name="confidential_notes" nolabel="1" options="{'collaborative': true}"/>
+                </page>
+            </xpath>
+
+           
+            <xpath expr="//form" position="attributes">
+                <attribute name="js_class">kavi_hr_applicant_form</attribute>
+            </xpath>
+            <xpath expr="//form" position="inside">
+                <field name="html_field_history_metadata" invisible="1"/>
+                <!-- Salary Structure is a plain-text dependency field. This
+                     hidden Html mirror is loaded into the form solely so the
+                     native Odoo HistoryDialog can read its metadata. -->
+                <field name="kavi_salary_structure_history" invisible="1"/>
+            </xpath>
+
+          
+
+        </field>
+    </record>
+
+</odoo>

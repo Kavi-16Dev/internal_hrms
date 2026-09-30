@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- NOTE: If your Odoo 19 instance has renamed/customized the base
+         hr_recruitment views, update the `inherit_id` refs below to match
+         the actual external IDs (check via Settings > Technical > Views). -->
+
+    <record id="view_hr_applicant_form_duplicate_inherit" model="ir.ui.view">
+        <field name="name">hr.applicant.form.duplicate.inherit</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-0" role="alert"
+                     invisible="not is_duplicate_application">
+                    <strong>Duplicate Application:</strong>
+                    This candidate has already applied for this position.
+                    <field name="duplicate_of_id" readonly="1" class="oe_inline"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="action_view_duplicate_applications" type="object"
+                        class="oe_stat_button" icon="fa-copy"
+                        invisible="duplicate_application_count == 0">
+                    <field name="duplicate_application_count" widget="statinfo" string="Duplicates"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//field[@name='partner_name']" position="after">
+                <field name="is_duplicate_application" invisible="1"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- <record id="view_hr_applicant_tree_duplicate_inherit" model="ir.ui.view">
+        <field name="name">hr.applicant.list.duplicate.inherit</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_tree"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-warning">is_duplicate_application == True</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='partner_name']" position="after">
+                <field name="is_duplicate_application" optional="show" widget="boolean_toggle"/>
+            </xpath>
+
+        </field>
+    </record> -->
+
+</odoo>

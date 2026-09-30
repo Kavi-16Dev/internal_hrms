@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_job_board_list" model="ir.ui.view">
+        <field name="name">hr.job.board.list</field>
+        <field name="model">hr.job.board</field>
+        <field name="arch" type="xml">
+            <list string="Job Boards">
+                <field name="name"/>
+                <field name="website"/>
+                <field name="account_count" string="Accounts"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hr_job_board_form" model="ir.ui.view">
+        <field name="name">hr.job.board.form</field>
+        <field name="model">hr.job.board</field>
+        <field name="arch" type="xml">
+            <form string="Job Board">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="website"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Notes..."/>
+                        </page>
+                        <page string="Accounts" name="accounts">
+                            <p class="text-muted">
+                                Connect one or more integration accounts (Adzuna, Careerjet,
+                                WhatJobs, Talent.com, LinkedIn Basic, Google) to post jobs to
+                                or pull applicants from this Job Board. Click a row to edit
+                                credentials or test the connection.
+                            </p>
+                            <field name="account_ids" context="{'default_job_board_id': id}">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'connected'"
+                                           decoration-danger="state == 'error'"
+                                           decoration-muted="state == 'not_connected'"/>
+                                    <field name="last_connection_date"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hr_job_board" model="ir.actions.act_window">
+        <field name="name">Job Boards</field>
+        <field name="res_model">hr.job.board</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a Job Board
+            </p>
+            <p>
+                Maintain the list of Job Boards (LinkedIn, Naukri, Indeed ...) and,
+                on each one, connect the integration accounts (Adzuna, Careerjet,
+                WhatJobs, Talent.com, LinkedIn Basic, Google) used to post jobs or
+                pull applicants.
+            </p>
+        </field>
+    </record>
+
+   
+    <menuitem id="menu_hr_job_board"
+              name="Job Boards"
+              parent="hr_recruitment.menu_hr_recruitment_configuration"
+              action="action_hr_job_board"
+              groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager"
+              sequence="60"/>
+</odoo>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_job_form_inherit_change_label" model="ir.ui.view">
+        <field name="name">hr.job.form.inherit.change.label</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_job_survey"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='interviewer_ids']" position="attributes">
+                <attribute name="string">Hiring Manager</attribute>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Offer Letter Components">
+                    <group>
+                        <group>
+                            <field name="working_hours"/>
+                            <field name="leave_eligibility"/>
+                            <!-- <field name="Key_Responsibilities" widget="html"/> -->
+                        </group>
+                        
+                    </group>
+                    <group col="1">
+                            <field name="key_responsibilities" widget="html" string="Key Roles and Responsibilities"  colspan="2" />
+                            <!-- <field name="key_responsibilities" widget="html" string="Key Roles and Responsibilities" colspan="2" options="{'collaborative': true}"/> -->
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>

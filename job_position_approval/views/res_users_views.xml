@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="custom_view_users_form_job_approver" model="ir.ui.view">
+        <field name="name">res.users.form.job.position.approver</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='preferences']//group" position="inside">
+                <group string="Recruitment" name="recruitment_approver_group">
+                    <field name="job_position_approver"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

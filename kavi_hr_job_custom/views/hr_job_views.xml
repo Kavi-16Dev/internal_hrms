@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    
+    <record id="view_hr_job_form_kavi_custom" model="ir.ui.view">
+        <field name="name">hr.job.form.kavi.custom</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+       
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+
+            <xpath expr="//notebook" position="inside">
+
+                
+                <!-- <page string="Job Details (Additional)" name="kavi_job_details_page"
+                      groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager,hr_recruitment.group_hr_recruitment_interviewer">
+                    <group>
+                        <field name="work_mode" widget="radio" options="{'horizontal': true}"/>
+                      
+                             <field name="interviewer_ids" widget="many2many_tags"/>
+                             here, with a <label for="interviewer_ids" string="Hiring Manager"/>
+                             or set string="Hiring Manager" directly on the field tag. -->
+                        <!-- <field name="hiring_manager_ids" widget="many2many_tags"
+                               groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager,hr_recruitment.group_hr_recruitment_interviewer"/> -->
+                    <!-- </group>
+                </page>  -->
+
+              
+                <page string="Budgeting Information" name="budgeting_information_page"
+                      groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager">
+                    <field name="budgeting_information" options="{'collaborative': true}"/>
+                </page>
+
+                
+
+                <!-- Recruitment Access ONLY - Interviewer excluded -->
+                <!-- <page string="Job Boards" name="job_boards_page"
+                      groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager"> -->
+                    <!-- no_create / no_quick_create: users must pick from the
+                         existing master list of Job Boards (Configuration >
+                         Job Boards) instead of being able to type free text
+                         and silently create a new, unvetted record (this is
+                         how junk entries like "trfghrhrtgr" got created). -->
+                    <!-- <field name="job_board_ids" widget="many2many_tags"
+                           options="{'no_create': true, 'no_quick_create': true}"/>
+                </page> -->
+
+                <page string="Job Boards"
+                    name="job_boards_page"
+                    groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager">
+
+                    <group>
+                        <field name="job_board_ids"
+                            widget="many2many_tags"
+                            options="{'no_create': true, 'no_quick_create': true}"/>
+                    </group>
+
+                </page>
+
+                <!-- Recruitment Access ONLY - Interviewer excluded -->
+                <page string="Vendors" name="vendors_page"
+                      groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager">
+                    
+                    <field name="tracker_link_ids">
+                        <list editable="bottom">
+                            <field name="vendor_id"/>
+                            <field name="source_id" readonly="1"/>
+                            <field name="link_type"/>
+                            <field name="url" string="Tracker Link" widget="url"/>
+                            <field name="email_address" string="Email" column_invisible="0" widget="kavi_email_tracker"
+                                   options="{'tracking_url_field': 'email_url'}" readonly="1"/>
+                        </list>
+                    </field>
+                </page>
+
+            </xpath>
+
+           
+           
+
+            <!-- <xpath expr="//field[@name='address_id']" position="after">
+                <newline/>
+                <label for="work_mode"/>
+                <div>
+                    <field name="work_mode" widget="radio" options="{'horizontal': true}"/>
+                </div>
+            </xpath> -->
+
+            <!-- <xpath expr="//field[@name='address_id']" position="after">
+                <field name="work_mode" widget="radio" options="{'horizontal': true}"/>
+            </xpath> -->
+            <xpath expr="//field[@name='address_id']/.." position="after">
+              
+                <field name="work_mode" widget="radio"/>
+                
+            </xpath>
+
+           
+           
+            
+            <xpath expr="//form" position="attributes">
+                <attribute name="js_class">kavi_hr_job_form</attribute>
+            </xpath>
+            <xpath expr="//form" position="inside">
+                <field name="html_field_history_metadata" invisible="1"/>
+            </xpath>
+
+         
+        </field>
+    </record>
+
+  
+
+</odoo>

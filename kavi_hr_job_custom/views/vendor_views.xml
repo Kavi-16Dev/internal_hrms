@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_recruitment_vendor_list" model="ir.ui.view">
+        <field name="name">hr.recruitment.vendor.list</field>
+        <field name="model">hr.recruitment.vendor</field>
+        <field name="arch" type="xml">
+            <list string="Vendors">
+                <field name="name"/>
+                <field name="contact_person"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="source_id"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hr_recruitment_vendor_form" model="ir.ui.view">
+        <field name="name">hr.recruitment.vendor.form</field>
+        <field name="model">hr.recruitment.vendor</field>
+        <field name="arch" type="xml">
+            <form string="Vendor">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" placeholder="e.g. Acme Staffing Partners"/>
+                            <field name="contact_person" placeholder="e.g. John Doe"/>
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="user_id"
+                                   domain="[('group_ids', 'in', [%(hr_recruitment.group_hr_recruitment_user)d, %(hr_recruitment.group_hr_recruitment_manager)d])]"/>
+                        </group>
+                        <group>
+                            <field name="source_id"
+                                   help="Required. Used to build the Tracker Link when this vendor is added to a Job Position."/>
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="partner_id"
+                                   help="Company-type Contacts record representing this Vendor - its Name IS this Vendor's Company Name. Auto-created if left empty."/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                       
+                        <page string="Address" name="address_page">
+                            <group>
+                                <group>
+                                    <field name="street" placeholder="Street..."/>
+                                    <field name="street2" placeholder="Street 2..."/>
+                                    <field name="city" placeholder="City"/>
+                                </group>
+                                <group>
+                                    <field name="state_id" placeholder="State" context="{'country_id': country_id, 'default_country_id': country_id}"/>
+                                    <field name="zip" placeholder="ZIP"/>
+                                    <field name="country_id" placeholder="Country"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        
+                        <page string="Job Positions" name="job_positions_page"
+                              groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager">
+                            <field name="job_ids"
+                                   readonly="1"
+                                   options="{'create': false, 'delete': false, 'edit': false, 'no_open': true}">
+                                <list create="0" edit="0" delete="0" import="0"
+                                      export_xlsx="0" open_form_view="0" no_open="1">
+                                    <field name="name" string="Job Position" readonly="1"/>
+                                    <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                                    <field name="department_id" readonly="1"/>
+                                    <field name="user_id" string="Recruiter" readonly="1"/>
+                                    <field name="no_of_recruitment" string="Positions" readonly="1"/>
+                                    <field name="application_count" string="Applications" readonly="1"/>
+                                    <field name="website_published" string="Published" widget="boolean" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+
+                    <field name="notes" placeholder="Notes..." nolabel="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hr_recruitment_vendor" model="ir.actions.act_window">
+        <field name="name">Vendors</field>
+        <field name="res_model">hr.recruitment.vendor</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_hr_recruitment_vendor"
+              name="Vendors"
+              parent="hr_recruitment.menu_hr_recruitment_configuration"
+              action="action_hr_recruitment_vendor"
+              groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_manager"
+              sequence="61"/>
+</odoo>

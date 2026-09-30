@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Pre-configured out of the box: both fields active from install,
+         so upgrading this module keeps tracking Budgeting Information
+         exactly as before, and also starts tracking Key Roles and
+         Responsibilities. noupdate="1": if you edit these rows (or their
+         labels) from the UI, a module upgrade won't overwrite them. -->
+
+    <record id="tracked_field_budgeting_information" model="hr.job.tracked.field">
+        <field name="field_key">budgeting_information</field>
+        <field name="field_label">Budgeting Information</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="tracked_field_key_responsibilities" model="hr.job.tracked.field">
+        <field name="field_key">key_responsibilities</field>
+        <field name="field_label">Key Roles and Responsibilities</field>
+        <field name="sequence">20</field>
+    </record>
+
+</odoo>

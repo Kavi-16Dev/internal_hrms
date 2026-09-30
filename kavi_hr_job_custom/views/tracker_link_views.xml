@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vendor Tracker Links -->
+    <record id="view_hr_job_vendor_tracker_link_list" model="ir.ui.view">
+        <field name="name">hr.job.vendor.tracker.link.list</field>
+        <field name="model">hr.job.vendor.tracker.link</field>
+        <field name="arch" type="xml">
+            <list string="Vendor Tracker Links" create="false" edit="false">
+                <field name="vendor_id"/>
+                <field name="source_id"/>
+                <field name="link_type"/>
+                <field name="url" string="Tracker Link" widget="url"/>
+                <field
+                    name="email_address"
+                    string="Email"
+                    column_invisible="0"
+                    widget="kavi_email_tracker"
+                    options="{'tracking_url_field': 'email_url'}"
+                    readonly="1"
+                />
+            </list>
+        </field>
+    </record>
+
+    <!--
+        Recruitment > Trackers
+
+        Odoo's standard Email field is replaced only in this list view.
+        The underlying standard hr.recruitment.source.email field is not
+        modified, so Odoo's native alias functionality remains available
+        elsewhere.
+
+        The visible Email and copied/hovered Tracking URL now come from
+        the exact same shared logic used by the Vendors tab.
+    -->
+    <record
+        id="view_hr_recruitment_source_email_tracking_kavi"
+        model="ir.ui.view"
+    >
+        <field name="name">hr.recruitment.source.email.tracking.kavi</field>
+        <field name="model">hr.recruitment.source</field>
+        <field name="inherit_id"
+               ref="hr_recruitment.hr_recruitment_source_tree"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='email']" position="replace">
+                <field
+                    name="kavi_email_url"
+                    column_invisible="1"
+                />
+                <field
+                    name="kavi_email_address"
+                    string="Email"
+                    column_invisible="0"
+                    widget="kavi_email_tracker"
+                    options="{'tracking_url_field': 'kavi_email_url'}"
+                    readonly="1"
+                />
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

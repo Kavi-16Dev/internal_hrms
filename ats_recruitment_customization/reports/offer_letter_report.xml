@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<template id="report_offer_letter">
+    <t t-call="web.html_container">
+        <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+        <t t-foreach="docs" t-as="o">
+
+            <div class="header" style="margin:0; padding:0 18px; width:auto;">
+                <img t-att-src="base_url + '/ats_recruitment_customization/static/src/img/header.png'" 
+                     style="width:100%; display:block; margin:0; padding:0;"/>
+            </div>
+
+            <div class="footer" style="margin:0 -10mm 0 -10mm; padding:0; width:auto;">
+                <img t-att-src="base_url + '/ats_recruitment_customization/static/src/img/footer.png'" 
+                      style="width:100%; display:block; margin:0; padding:0;"/>
+            </div>
+
+            <div class="article" t-att-data-oe-model="o._name" t-att-data-oe-id="o.id">
+                <style>
+                    /* Precision geometric layout for seamless page flow */
+                    @page {
+                        size: A4;
+                        /* Top margin matches header height exactly so content starts immediately below it */
+                        margin-top: 125px;    
+                        /* Bottom margin matches footer height exactly to prevent overlap */
+                        margin-bottom: 115px; 
+                        /* Zeroed out side margins to let the inner containers handle pixel-perfect alignment */
+                        margin-left: 0px;    
+                        margin-right: 0px;   
+                    }
+
+                    .page {
+                        font-family: Arial, sans-serif;
+                        color: #000;
+                        font-size: 12pt;
+                        line-height: 1.6;
+                        width: 100%;
+                    }
+
+                    .content-body { 
+                        width:100%;
+                        margin:0;
+                        padding-top:0;
+
+                        /* Adjust only the body alignment */
+                        padding-left:45px;
+                        padding-right:44px;
+
+                        box-sizing:border-box;
+                        
+
+                        <!-- padding-left:40px;
+                        padding-right:40px;
+
+                        padding-top:0;
+                        margin-top:0;
+
+                        box-sizing:border-box; -->
+                    }
+                    
+                    /* Ensures that when a page break occurs, the next page's body content maps strictly to the top boundary */
+                    .page-section {
+                        padding-top: 10px;
+                        width: 100%;
+                    }
+                    
+                     ul {
+                        margin: 12px 0 0 25px;
+                        padding-left: 18px;
+                    }
+
+                    ul li {
+                        line-height: 1.3;
+                        padding-bottom: 10px;
+                        margin: 0;
+                    }
+
+                    ul li:last-child {
+                        padding-bottom: 0;
+                    }
+
+                    h3 { font-weight: bold; }
+                    
+                    .section-title {
+                        font-weight: bold;
+                        text-decoration: underline;
+                        margin-top: 10px;
+                        margin-bottom: 20px;
+                        font-size: 14pt;
+                        text-transform: uppercase;
+                    }
+                    .term-row {
+                        position: relative;
+                        display: table;
+                        width: 100%;
+                        margin-top: 30px;
+                    }
+
+                    .term-no {
+                        display: table-cell;
+                        width: 35px;
+                        vertical-align: top;
+                        padding-right: 10px;
+                        font-size: 12pt;
+                    }
+
+                    .term-content {
+                        display: table-cell;
+                        vertical-align: top;
+                        line-height: 1.7;
+                        font-size: 12pt;
+                        text-align: justify;
+                    }
+
+                    .term-content strong {
+                        font-weight: bold;
+                    }
+                </style>
+
+                <div t-if="o.offer_approval_state != 'approved'"
+                     class="page"
+                     style="
+                        width:100%;
+                        text-align:center;
+                        color:#b30000;
+                        border:2px solid #b30000;
+                        background:#ffe6e6;
+                        padding:15px;
+                        margin-top:50px;
+                        font-size:24px;
+                        font-weight:bold;">
+                    &#9888; THIS IS A DRAFT OFFER LETTER<br/>
+                    NOT APPROVED FOR ISSUANCE
+                </div>
+
+                <div t-if="o.offer_approval_state == 'approved'" class="page">
+                    <div class="content-body">
+                        <div class="oe_structure"/>
+
+                        <div class="page-section">
+                            <div class="row" style="margin-bottom: 20px; margin-top: 10px;">
+                                <div class="col-8">
+                                    <p style="margin-bottom: 0;">
+                                        <strong><span t-field="o.partner_name"/></strong>
+                                    </p>
+                                    <p style="margin-bottom: 0;">
+                                        <!-- <strong><span t-field="o.job_address"/></strong> -->
+                                        <p style="font-size: 12pt;">Chennai</p>
+                                    </p>
+                                </div>
+                                <div class="col-4 text-right">
+                                    <p style="margin-bottom: 0; text-align: left;">
+                                        <strong>Date:</strong>
+                                        <span t-field="o.offer_date" t-options="{'widget': 'date'}"/>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <p style="margin-top: 30px;">Dear <span t-field="o.partner_name"/>,</p>
+
+                            <div style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
+                                <h3 style="text-decoration: underline; display: inline-block; font-size: 16pt;">OFFER LETTER</h3>
+                            </div>
+
+                            <p>
+                                Congratulations! We are delighted to offer you the position of
+                                <strong><span t-field="o.job_id.name"/></strong>
+                                at <strong>Kavi India.</strong> We look forward to the skills and experience you will bring to our team.
+                            </p>
+
+
+                            <p style="margin-top: 20px;">
+                                Upon your acceptance of the offer, and subject to the completion of all
+                                pre-requisites to the satisfaction of the Company, your appointment shall be
+                                effective from the
+                                <strong>
+                                    <span t-field="o.joining_date" t-options="{'format': 'dd'}"/><sup>th</sup> day of
+                                    <span t-field="o.joining_date" t-options="{'format': 'MMMM yyyy'}"/>
+                                </strong>.
+                                You shall be reporting to
+                                <strong><span t-field="o.job_id.interviewer_ids"/></strong>,
+                                <t t-if="o.job_id and o.job_id.interviewer_ids">
+                                    <strong><span t-esc="o.job_id.interviewer_ids[0].employee_id.job_title"/></strong>-<strong><span t-field="o.job_id.interviewer_ids[0].employee_id.department_id"/></strong>
+                                </t>, effective your date of joining
+                                for all administrative and management functions.
+                            </p>
+
+
+                            <p style="margin-top: 20px;">
+                                The Employment terms below, which will be effective from your date of joining
+                                the Company as an employee, set forth the terms and conditions under which
+                                <strong>Kavi Software Technologies Pvt Ltd</strong> would employ you, and your taking of the offer
+                                of employment would be on the basis of these terms and conditions of employment set 
+                                forth in this document.
+                            </p>
+                        </div>
+
+                        <div style="page-break-after: always;"/>
+
+                        <div class="page-section">
+                            <div class="section-title" style="text-align: center;">Specific Terms of Employment</div>
+
+                            
+                            <div class="term-row">
+                                <div class="term-no"><strong>1.</strong></div>
+                                <div class="term-content">
+                                    <strong>Compensation:</strong> Your compensation shall comprise of fixed emoluments the details of which are enlisted below:
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 30px; text-align: center; margin-bottom: 30px; width: 100%;">
+                                <div style="width: 380px; margin: 0 auto; padding: 20px;">
+                                    <div style="font-size: 12pt; text-align: center;">
+                                        <span t-field="o.offer_salary_structure"/>
+                                    </div>
+                                </div>
+
+                                <t t-if="o.offer_note">
+                                    <div style="margin-top: 15px; text-align: left; font-size: 12pt;">
+                                        <strong>Note:</strong>
+                                       <p style="font-size: 12pt;"> <span t-field="o.offer_note"/></p>
+                                        <!-- <p style=" margin-bottom: 0; line-height: 1.3; font-size: 14pt;"><span t-field="o.applicant_notes"/></p> -->
+                                    </div>
+                                </t>
+
+                                <p style="margin-top: 30px; text-align: left;">
+                                    The Compensation and the terms of employment shall be subject to review in
+                                    accordance with the Company's policies from time to time, at the sole discretion
+                                    of the Company. The monthly payments and benefits shall be subject to deduction
+                                    of income tax as per prevailing income tax rates and other statutory deductions
+                                    as may be required, in accordance with the applicable legislation in force from time to time.
+                                </p>
+                                
+                            </div>
+                        </div>
+
+                        <!-- <div style="page-break-after: always;"/> -->
+
+                        <div class="page-section">0
+                            
+                            <div class="term-row">
+                                <div class="term-no"><strong>2.</strong></div>
+                                <div class="term-content">
+                                    <strong>Medical Insurance and Retirement Benefits:</strong> Apart from the above compensation, you shall be eligible for medical insurance after completion 
+                                       of your probation period and retirement benefits as per the prevailing policies of the Company. 
+                                </div>
+                            </div>
+
+                            
+                            <div class="term-row">
+                                <div class="term-no"><strong>3.</strong></div>
+                                <div class="term-content">
+                                    <strong> Reimbursement of Expenses:</strong> Any official expenditure, for and on behalf of the Company, incurred by you during your employment
+                                        shall be eligible for reimbursement on cost basis with the prior approval of your reporting authority
+                                        on production of appropriate proof and relevance of expenditure. 
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 40px;">
+                                
+                                <div class="term-row">
+                                    <div class="term-no"><strong>4.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Key Roles and Responsibilities:</strong>
+                                        <!-- <span t-field="o.job_id.Key_Responsibilities"/> -->
+                                        <span t-field="o.job_id.key_responsibilities"/>
+                                         <!-- The key roles and responsibilities relating to your function shall be in line with the activities relating to the following: -
+                                        <ul>
+                                            <li>Manage and optimize cloud services across AWS, Azure, or GCP.</li>
+                                            <li>Ensure cloud environments align with best practices for security, performance, and reliability.</li>
+                                            <li>Implement hybrid and multi-cloud strategies where needed.</li>
+                                            <li>Configure and manage VPCs, subnets, firewalls, VPNs, and load balancers.</li>
+                                            <li> Optimize cloud network performance and troubleshoot latency issues.</li>
+                                            <li>Implement cloud monitoring and observability using Prometheus, Grafana, ELK, or Cloud-native tools.</li>
+                                            <li>Develop alerting and logging strategies to enhance system reliability.</li>
+                                            <li>Troubleshoot cloud infrastructure issues and optimize performance.</li>
+                                            <li>Use Terraform, CloudFormation, or Pulumi to automate infrastructure provisioning.</li>
+                                            <li>Implement configuration management with Ansible, Puppet, or Chef.</li>
+                                            <li>Optimize infrastructure for high availability and disaster recovery.</li>
+                                            <li>Implement cloud security best practices, including IAM, encryption, and vulnerability management.</li>
+                                            <li>Ensure compliance with industry standards (SOC2, ISO27001, NIST, GDPR, HIPAA, etc.).</li>
+                                            <li>Conduct security audits and proactively address risks.</li>
+                                            <li>Work with DevOps teams to build and maintain CI/CD pipelines (Jenkins, GitHub Actions, GitLab CI, Azure DevOps).</li>
+                                            <li>Support containerized workloads using Docker and Kubernetes (EKS, AKS, GKE).</li>
+                                            <li>Automate cloud resource scaling and deployment processes.</li>
+                                        </ul>  -->
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 40px;">
+                             
+                                <div class="term-row">
+                                    <div class="term-no"><strong>5.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Right to Transfer etc:</strong> The Company shall have the right to transfer/post/second you after reasonable notice, 
+                                            to any function or department, any other location within India or abroad where the Company
+                                            conducts business, or to its affiliate and subsidiary organizations, at any time in the future.
+                                            While on transfer you will be governed by the rules, regulations and conditions of service of that location.
+                                    </div>
+                                </div>
+
+                                <div style="margin-top: 20px; border-left: 3px solid #eee; padding-left: 20px;">
+                                    
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 40px;">
+                                
+                                <div class="term-row">
+                                    <div class="term-no"><strong>6.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Adherence to Company's Policies:</strong>  You will be governed by and required to comply with and adhere to all the policies of the Company
+                                            (and changes/revisions to it effected from time to time) during your employment with the Company. 
+                                            You shall also be required to comply with the Code of Conduct for employees and changes/revisions 
+                                            to it effect from time to time.
+                                    </div>
+                                </div>
+                                <div style="margin-top: 20px; border-left: 3px solid #eee; padding-left: 20px;">
+                                   
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 40px;">
+                                <!-- <p><strong>7. Maintain Confidentiality:</strong>
+                                      During your employment with the Company, you will maintain strict confidentiality with regard 
+                                      to any information pertaining to the affairs or business matters of the Company or document, 
+                                      scientific or technical data, legal, unpublished financial information etc. regarding a 
+                                      client/customer that was acquired or referred to you in course of providing services.
+                                </p> -->
+                                <div class="term-row">
+                                    <div class="term-no"><strong>7.</strong></div>
+                                    <div class="term-content">
+                                        <strong> Maintain Confidentiality:</strong>  During your employment with the Company, you will maintain strict confidentiality with regard 
+                                            to any information pertaining to the affairs or business matters of the Company or document, 
+                                            scientific or technical data, legal, unpublished financial information etc. regarding a 
+                                            client/customer that was acquired or referred to you in course of providing services.
+                                    </div>
+                                </div>
+                                <div style="margin-top: 20px; border-left: 3px solid #eee; padding-left: 20px;">
+                                  
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="page-break-after: always;"/>
+
+                        <div class="page-section">
+                            <div class="section-title" style="text-align: center;">General Terms and Conditions</div>
+                                
+                                <div class="term-row">
+                                    <div class="term-no"><strong>1.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Working Hours:</strong>  
+                                        <span t-field="o.job_id.working_hours"/>
+                                    </div>
+                                </div>
+                               
+                                <div class="term-row">
+                                    <div class="term-no"><strong>2.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Leave Eligibility:</strong>  
+                                        <span t-field="o.job_id.leave_eligibility"/>
+                                    </div>
+                                </div>
+                                <!-- <p style="margin-top: 30px;">
+                                    <strong>3. Confidential Reference Checks:</strong>
+                                      The Company will make confidential reference checks, including but not limited to,
+                                      your stated academic credentials and professional career. 
+
+                                </p> -->
+                                <div class="term-row">
+                                    <div class="term-no"><strong>3.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Confidential Reference Checks:</strong> The Company will make confidential reference checks, including but not limited to,
+                                            your stated academic credentials and professional career.
+                                    </div>
+                                </div>
+                                
+                                 <div class="term-row">
+                                    <div class="term-no"><strong>4.</strong></div>
+                                    <div class="term-content">
+                                        <strong> Joining documents:</strong> Upon joining, you will be required to provide the Company with self-attested copies of: 
+
+                                        <ul>
+                                            <li> 3 passport size photographs</li>
+                                            <li> Latest pay slip from past employer, if applicable</li>
+                                            <li> Copy of PAN card and Aadhaar card</li>
+                                            <li> Graduation and post-graduation certificates</li>
+                                            <li> Professional Degree, if applicable, relevant for job profile</li>
+                                            <li> Proof of employment track, if applicable</li>
+                                            <li> Relieving letter from your immediate past employer, if applicable</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                               
+                                <div class="term-row">
+                                    <div class="term-no"><strong>5.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Confirmation and Termination:</strong> You will be on probation period and will be a confirmed employee based on performance.
+                                        Your employment may be terminated by either party by serving one months’ 
+                                        notice on the other party before termination or by the payment of salary in lieu thereof.
+                                        However, the Company reserves the right not to accept salary in lieu of notice. Salary for this 
+                                        purpose shall mean your consolidated monthly gross salary inclusive of all allowances. 
+                                    </div>
+                                </div>
+                                
+                                <div class="term-row">
+                                    <div class="term-no"><strong>6.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Restriction on Parallel Commercial Activity:</strong> During your employment with the Company, you will not undertake any full-time or 
+                                        part-time employment or engage in any other activity of commercial nature without 
+                                        the prior approval in writing from the Company.
+                                    </div>
+                                </div>
+                                <!-- <p style="margin-top: 30px;">
+                                    <strong>7. Right to Instant Termination: </strong>
+                                       The Company reserves the right to terminate your employment, at any time without notice period, 
+                                       in the following circumstances:
+                                    <ul>
+                                        <li>You are guilty of dishonesty, or serious or persistent misconduct.</li>
+                                        <li>You neglect or refuse to attend to your duties or fail to perform any of your obligations.</li>
+                                        <li>You fail to observe Company’s business, disciplinary and ethical code, guidelines and policies.</li>
+                                        <li>You absent yourself from the services of the Company without prior approval or overstay sanctioned 
+                                            leave by 3 (three) consecutive days without prior intimation and approval, as you will be deemed to
+                                            have abandoned service voluntarily.</li>
+                                    </ul>
+
+                                </p> -->
+                                <div class="term-row">
+                                    <div class="term-no"><strong>7.</strong></div>
+                                    <div class="term-content">
+                                        <strong> Right to Instant Termination:</strong> The Company reserves the right to terminate your employment, at any time without notice period, 
+                                           in the following circumstances:
+                                        <ul>
+                                            <li>You are guilty of dishonesty, or serious or persistent misconduct.</li>
+                                            <li>You neglect or refuse to attend to your duties or fail to perform any of your obligations.</li>
+                                            <li>You fail to observe Company’s business, disciplinary and ethical code, guidelines and policies.</li>
+                                            <li>You absent yourself from the services of the Company without prior approval or overstay sanctioned 
+                                                leave by 3 (three) consecutive days without prior intimation and approval, as you will be deemed to
+                                                have abandoned service voluntarily.</li>
+                                        </ul>
+
+                                    </div>
+                                </div>
+                                
+                                <div class="term-row">
+                                    <div class="term-no"><strong>8.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Restoration of Company’s Property:</strong> Upon termination of this employment, you shall immediately return all Company’s
+                                            property in your possession to the Company. You will be relieved from services 
+                                            only after satisfactory hand-over of responsibilities, settlement of outstanding 
+                                            dues and service of notice period, and subject to any specific conditions mandated 
+                                            by relevant circumstances at the time.
+                                    </div>
+                                </div>
+                                 
+                                <div class="term-row">
+                                    <div class="term-no"><strong>9.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Retirement:</strong> You will retire from the services of the Company upon attaining the superannuation
+                                           age of 58 years.
+
+                                    </div>
+                                </div>
+                                <div class="term-row">
+                                    <div class="term-no"><strong>10.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Notice Period:</strong> A notice period of 1 month is required for the termination of your employment contract 
+                                         with the Company either by you or the Company. Non-observance of the notice period may 
+                                         result in abandonment of the salary dues (full and final settlement), if any, that the 
+                                         company owes to you.
+                                    </div>
+                                </div>
+                                
+                                <div class="term-row">
+                                    <div class="term-no"><strong>11.</strong></div>
+                                    <div class="term-content">
+                                        <strong>Governing Statute:</strong> These terms of your employment shall be governed by and construed in accordance with the laws of India.
+                                    </div>
+                                </div>
+                                <p style="margin-top: 30px; text-align: left;">
+                                   Your employment with the Company is subject to you accepting the above terms and conditions 
+                                   within 2 days of receiving this letter and starting work with us on
+                                    <strong>
+                                        <span t-field="o.joining_date" t-options="{'format': 'dd'}"/><sup>th</sup> day of
+                                        <span t-field="o.joining_date" t-options="{'format': 'MMMM yyyy'}"/>
+                                    </strong>.
+                                </p>
+                                
+
+                        </div>
+
+                        <!-- <div style="page-break-after: always;"/>  -->
+                        <div style="page-break-after: always;"></div>
+
+                        <div class="page-section">
+                            <!-- <p>
+                                Please accept these terms within 2 days. Joining date:
+                                <strong><span t-field="o.joining_date" t-options="{'widget': 'date'}"/></strong>.
+                            </p> -->
+                          
+                            <div style="margin-top: 80px;">
+                                <p>We welcome you and wish you a successful association with us.</p>
+
+                                <div class="row" style="margin-top: 60px;">
+                                    <div class="col-6">
+                                        <p><strong>For </strong><strong style="font-size: 12pt;">Kavi Software Technologies Pvt Ltd </strong></p>
+                                        <div style="margin-top: 60px; border-top: 1px solid #000; width: 80%; padding-top: 10px;">
+                                            <p><strong><span t-field="o.job_id.interviewer_ids"/></strong></p>
+                                            <p style="font-size: 12pt;">
+                                                
+                                                <t t-if="o.job_id and o.job_id.interviewer_ids">
+                                                    <strong><span t-esc="o.job_id.interviewer_ids[0].employee_id.job_title"/></strong>-<strong><span t-field="o.job_id.interviewer_ids[0].employee_id.department_id"/></strong>
+                                                </t>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <!-- <div class="col-7" >
+                                        <p>Accepted by:</p>
+                                        <div style="margin-top: 60px; border-top: 1px solid #000; width: 80%; padding-top: 10px;">
+                                            <p ><strong><span t-field="o.partner_name"/></strong></p>
+                                            <p style="font-size: 14pt;">Candidate Signature</p>
+                                        </div>
+                                    </div> -->
+                                </div>
+                                <div style="margin-top: 25px;">
+                                    <p>I hereby accept the offer of employment and hence the terms and conditions in this letter of offer.</p>
+                                </div>
+                                <div class="row" style="margin-top: 60px;">
+                                    <div class="col-7" >
+                                        <p>Accepted by:</p>
+                                        <div style="margin-top: 60px; border-top: 1px solid #000; width: 80%; padding-top: 10px;">
+                                            <p ><strong><span t-field="o.partner_name"/></strong></p>
+                                            <!-- <p style="font-size: 14pt;">Candidate Signature</p> -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </div>
+            </div>
+
+        </t>
+    </t>
+</template>
+</odoo>

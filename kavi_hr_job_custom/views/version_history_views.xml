@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        NOTE:
+        This file previously defined two generic, non-inherited views on the
+        core `mail.message` model (view_kavi_version_history_message_list and
+        view_kavi_version_history_message_form), using field strings like
+        "Changed On" / "Changed By" / "Change Summary".
+
+        Because those records had no inherit_id and were never bound to any
+        action or menu, Odoo registered them as fallback base views for
+        mail.message. That caused them to be picked up by Odoo's standard
+        debug "Messages" list/form (accessible via the bug icon on any
+        record's chatter) everywhere in the database, replacing the real
+        default columns (Date / Subject / Author / Related Document Model /
+        Related Document ID) with the version-history-style labels.
+
+        They have been removed to restore the standard mail.message list/
+        form views. If a dedicated "Version History" message log is still
+        needed, define it as its own ir.actions.act_window with an explicit
+        view_id pointing at a properly scoped view, rather than as a bare
+        (non-inherited) view on mail.message.
+    -->
+
+</odoo>

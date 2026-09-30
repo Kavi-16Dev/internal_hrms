@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Recruitment Officers normally have read-only access to stages in Odoo 19.
+         This module intentionally grants write access so the New Status tooltip
+         can be edited from the stage form. Create/delete remain disabled. -->
+</odoo>

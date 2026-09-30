@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_inherit_kavi_is_vendor" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.kavi.is.vendor</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <field name="company_registry" position="before">
+                <field name="is_vendor"/>
+            </field>
+        </field>
+    </record>
+</odoo>
