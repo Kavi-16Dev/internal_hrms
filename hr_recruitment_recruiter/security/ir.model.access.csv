@@ -1,5 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_hr_applicant_recruiter,hr.applicant recruiter,hr_recruitment.model_hr_applicant,hr_recruitment_recruiter.group_hr_recruiter,1,1,1,0
-access_hr_candidate_recruiter,hr.candidate recruiter,hr_recruitment.model_hr_candidate,hr_recruitment_recruiter.group_hr_recruiter,1,1,1,0
 access_hr_applicant_category_recruiter,hr.applicant.category recruiter,hr_recruitment.model_hr_applicant_category,hr_recruitment_recruiter.group_hr_recruiter,1,1,1,0
+access_hr_recruitment_degree_recruiter,hr.recruitment.degree recruiter,hr_recruitment.model_hr_recruitment_degree,hr_recruitment_recruiter.group_hr_recruiter,1,1,1,0
+access_res_partner_recruiter,res.partner recruiter,base.model_res_partner,hr_recruitment_recruiter.group_hr_recruiter,1,1,1,0
+access_calendar_event_recruiter,calendar.event recruiter,calendar.model_calendar_event,hr_recruitment_recruiter.group_hr_recruiter,1,1,1,1
+access_calendar_event_type_recruiter,calendar.event.type recruiter,calendar.model_calendar_event_type,hr_recruitment_recruiter.group_hr_recruiter,1,1,1,0
 access_hr_job_recruiter,hr.job recruiter,hr.model_hr_job,hr_recruitment_recruiter.group_hr_recruiter,1,1,0,0

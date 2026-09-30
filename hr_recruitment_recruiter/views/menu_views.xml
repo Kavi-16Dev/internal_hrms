@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Recruiters must get the unfiltered "By Job Positions" menu (the stock
+         interviewer menu only lists jobs where the user is an interviewer). -->
+    <record id="hr_recruitment.menu_hr_job_position" model="ir.ui.menu">
+        <field name="group_ids" eval="[(4, ref('hr_recruitment_recruiter.group_hr_recruiter'))]"/>
+    </record>
+</odoo>
