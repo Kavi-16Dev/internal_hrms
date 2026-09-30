@@ -1,6 +1,6 @@
 {
     'name': 'Recruitment: Recruiter Role',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Human Resources/Recruitment',
     'author': 'KKR - Tech Consulant',
     'summary': 'Recruiter group: manage applications, interviews and offers; read-only jobs',
