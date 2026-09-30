@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Interviewer rules limit records to "my interviews"; Recruiters must see all -->
+    <record id="hr_applicant_recruiter_rule" model="ir.rule">
+        <field name="name">Applicant: Recruiter sees all</field>
+        <field name="model_id" ref="hr_recruitment.model_hr_applicant"/>
+        <field name="groups" eval="[(4, ref('group_hr_recruiter'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="hr_candidate_recruiter_rule" model="ir.rule">
+        <field name="name">Candidate: Recruiter sees all</field>
+        <field name="model_id" ref="hr_recruitment.model_hr_candidate"/>
+        <field name="groups" eval="[(4, ref('group_hr_recruiter'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="hr_job_recruiter_rule" model="ir.rule">
+        <field name="name">Job: Recruiter sees all</field>
+        <field name="model_id" ref="hr.model_hr_job"/>
+        <field name="groups" eval="[(4, ref('group_hr_recruiter'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+</odoo>
