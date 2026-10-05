@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_applicant_blacklist_wizard_form" model="ir.ui.view">
+        <field name="name">hr.applicant.blacklist.wizard.form</field>
+        <field name="model">hr.applicant.blacklist.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Blacklist Applicant">
+                <group>
+                    <field name="applicant_id" readonly="1"/>
+                    <field name="reason" placeholder="Why is this applicant being blacklisted?"/>
+                </group>
+                <footer>
+                    <button string="Save" name="action_confirm" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_applicant_view_form_blacklist" model="ir.ui.view">
+        <field name="name">hr.applicant.form.blacklist</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Header buttons (shown conditionally; same server actions as the Action menu) -->
+            <xpath expr="//header" position="inside">
+                <button name="%(hr_applicant_blacklist.action_applicant_blacklist)d" type="action"
+                        string="Blacklist" invisible="is_applicant_blacklisted"/>
+                <button name="%(hr_applicant_blacklist.action_applicant_remove_blacklist)d" type="action"
+                        string="Remove Blacklist" invisible="not is_applicant_blacklisted"/>
+            </xpath>
+
+            <!-- "Blacklisted" banner -->
+            <xpath expr="//div[@name='button_box']" position="after">
+                <widget name="web_ribbon" title="Blacklisted" bg_color="text-bg-danger"
+                        invisible="not is_applicant_blacklisted"/>
+            </xpath>
+
+            <!-- Notebook page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Blacklist Details" name="blacklist_details">
+                    <group>
+                        <field name="is_applicant_blacklisted" readonly="1"/>
+                        <field name="blacklist_reason" readonly="1"/>
+                        <field name="removed_blacklist_reason" readonly="1"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

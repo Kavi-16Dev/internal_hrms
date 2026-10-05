@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_applicant_blacklist" model="ir.actions.server">
+        <field name="name">Blacklist</field>
+        <field name="model_id" ref="hr_recruitment.model_hr_applicant"/>
+        <field name="binding_model_id" ref="hr_recruitment.model_hr_applicant"/>
+        <field name="binding_type">action</field>
+        <field name="binding_view_types">form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_open_blacklist_wizard()</field>
+    </record>
+
+    <record id="action_applicant_remove_blacklist" model="ir.actions.server">
+        <field name="name">Remove Blacklist</field>
+        <field name="model_id" ref="hr_recruitment.model_hr_applicant"/>
+        <field name="binding_model_id" ref="hr_recruitment.model_hr_applicant"/>
+        <field name="binding_type">action</field>
+        <field name="binding_view_types">form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_open_remove_blacklist_wizard()</field>
+    </record>
+</odoo>
