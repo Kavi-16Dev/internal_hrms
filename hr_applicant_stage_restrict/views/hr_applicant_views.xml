@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Make the pipeline stage status bar read-only in the form view
+         for anyone who is not the assigned Recruiter (or a Recruitment
+         Manager). The server-side write() override is the real
+         enforcement; this is only to give a clean UX instead of an
+         error appearing after the click. -->
+    <record id="hr_applicant_view_form_stage_restrict" model="ir.ui.view">
+        <field name="name">hr.applicant.form.stage.restrict</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='stage_id']" position="before">
+                <field name="is_current_user_recruiter" invisible="1"/>
+                <field name="is_interviewer" invisible="1"/>
+            </xpath>
+            <xpath expr="//form" position="attributes"> <attribute name="readonly"> is_interviewer </attribute> </xpath>
+            <xpath expr="//field[@name='stage_id']" position="attributes">
+                <attribute name="readonly"> is_interviewer or not is_current_user_recruiter </attribute>
+                
+            </xpath>
+            <xpath expr="//field[@name='job_id']"
+                   position="attributes">
+
+                <attribute name="readonly">
+                    is_interviewer
+                </attribute>
+
+            </xpath>
+
+
+            <!-- Recruiter -->
+            <xpath expr="//field[@name='user_id']"
+                   position="attributes">
+
+                <attribute name="readonly">
+                    is_interviewer
+                </attribute>
+
+            </xpath>
+
+
+            <!-- Interviewers -->
+            <xpath expr="//field[@name='interviewer_ids']"
+                   position="attributes">
+
+                <attribute name="readonly">
+                    is_interviewer
+                </attribute>
+
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
