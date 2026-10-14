@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Scoped copy of web.SearchPanel that swaps its "Regular" (expanded,
+         desktop) content for our own custom_documents.SearchPanel.Regular
+         below. Only used by DocumentsSearchPanel (static template =
+         "custom_documents.SearchPanel"), so every other search panel in
+         the database is completely unaffected. -->
+    <t t-name="custom_documents.SearchPanel" t-inherit="web.SearchPanel" t-inherit-mode="primary">
+        <xpath expr="//t[@t-call='web.SearchPanel.Regular']" position="attributes">
+            <attribute name="t-call">custom_documents.SearchPanel.Regular</attribute>
+        </xpath>
+    </t>
+
+    <!-- Scoped copy of web.SearchPanelContent with the fixed
+         All / Company / My Drive / Shared with me / Requests / Inbox / Recent / Trash list
+         inserted above the regular Workspaces/Tags sections. -->
+    <t t-name="custom_documents.SearchPanel.Regular" t-inherit="web.SearchPanelContent" t-inherit-mode="primary">
+        <xpath expr="//div[hasclass('o_search_panel')]/button" position="after">
+            <div class="o_documents_category_panel mb-3">
+                <ul class="list-group d-block o_documents_category_list px-2 px-md-0">
+                    <li t-foreach="documentsCategories" t-as="category" t-key="category.id"
+                        class="list-group-item border-0 p-0 mb-1"
+                        t-attf-class="o_documents_category_item {{ activeDocumentsCategory === category.id ? 'active' : '' }}">
+                        <a href="#"
+                           class="o_documents_category_link d-flex align-items-center px-2 py-1 text-decoration-none rounded"
+                           t-on-click.prevent="() => this.selectDocumentsCategory(category)">
+                            <i t-attf-class="fa {{ category.icon }} o_documents_category_icon me-2"/>
+                            <span class="text-truncate" t-esc="category.label"/>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </xpath>
+    </t>
+
+</templates>

@@ -1,0 +1,111 @@
+// Fixed "drive" category list injected at the top of the Documents
+// search panel (All / Company / My Drive / Shared with me / Recent /
+// Trash) - replaces what used to be separate items under the
+// "Documents" top-menu dropdown.
+
+.o_documents_category_panel {
+    .o_documents_category_link {
+        color: var(--SearchPanel-value-text-color, inherit);
+        font-weight: 500;
+        gap: 0.25rem;
+
+        &:hover {
+            background-color: var(--SearchPanel-value-hover-bg, rgba(0, 0, 0, 0.04));
+        }
+    }
+
+    .o_documents_category_icon {
+        width: 1.1em;
+        text-align: center;
+        opacity: 0.7;
+    }
+
+    .o_documents_category_item.active .o_documents_category_link {
+        background-color: var(--SearchPanel-value-selected-bg, #e7e9fc);
+        color: var(--SearchPanel-value-selected-text-color, var(--o-brand-odoo, #714b67));
+
+        .o_documents_category_icon {
+            opacity: 1;
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------
+ * Documents browser: folder cards above the file cards.
+ * The cards are intentionally lightweight and keyboard accessible so they
+ * behave like the folder tiles shown by the reference Documents screen.
+ * ---------------------------------------------------------------------- */
+.o_documents_folder_browser {
+    flex: 0 0 100%;
+}
+
+.o_documents_section_title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--o-view-text-color, #212529);
+}
+
+.o_documents_files_title {
+    margin-top: 0.25rem;
+}
+
+.o_documents_folder_grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.o_documents_folder_card {
+    min-height: 68px;
+    width: 100%;
+    border: 1px solid var(--o-gray-300, #dee2e6);
+    background: var(--o-view-background-color, #fff);
+    padding: 0.8rem 0.9rem;
+    border-radius: 0;
+    color: var(--o-view-text-color, #212529);
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.o_documents_folder_card:hover,
+.o_documents_folder_card:focus {
+    background: var(--o-gray-100, #f8f9fa);
+    border-color: var(--o-gray-400, #ced4da);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    outline: none;
+}
+
+.o_documents_folder_card_main {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    font-size: 1rem;
+}
+
+.o_documents_folder_icon {
+    flex: 0 0 auto;
+    font-size: 1.05rem;
+}
+
+.o_documents_folder_name {
+    min-width: 0;
+}
+
+.o_documents_folder_parent {
+    margin-left: 1.35rem;
+    margin-top: 0.3rem;
+    color: var(--o-muted-color, #6c757d);
+    font-size: 0.82rem;
+}
+
+@media (max-width: 1200px) {
+    .o_documents_folder_grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .o_documents_folder_grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,11 @@
+custom_documents 19.0.0.17.0
+
+Fixes the 19.0.0.16.0 post-migration failure:
+psycopg2.errors.UndefinedFunction: function lower(jsonb) does not exist
+
+Reason: Odoo 19 stores translatable documents.folder.name as JSONB.
+The migration now reads the English value with name ->> 'en_US' before applying lower().
+
+Upgrade the complete module. No manual SQL change is required.
+
+19.0.0.18.0: Fixed the 19.0.0.16.0 migration so upgrades no longer call lower() on JSONB documents.folder.name. The 16.0.0 migration is now a no-op; 17.0.0 performs the JSONB-safe Inbox backfill.

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="custom_documents.DocumentsKanbanRenderer" t-inherit="web.KanbanRenderer" t-inherit-mode="primary">
+        <xpath expr="//t[@t-foreach='getGroupsOrRecords()']" position="before">
+            <div t-if="documentFolders.length" class="o_documents_folder_browser w-100 mb-4">
+                <h4 class="o_documents_section_title mb-3">Folders</h4>
+                <div class="o_documents_folder_grid">
+                    <t t-foreach="documentFolders" t-as="folder" t-key="folder.id">
+                        <button type="button"
+                                class="o_documents_folder_card text-start"
+                                t-on-click="() => this.openDocumentFolder(folder)"
+                                t-att-title="folder.name">
+                            <div class="o_documents_folder_card_main">
+                                <i class="fa fa-folder-o o_documents_folder_icon me-2"/>
+                                <span class="o_documents_folder_name text-truncate" t-esc="folder.name"/>
+                            </div>
+                            <div t-if="folder.parent_name" class="o_documents_folder_parent text-truncate">
+                                In <t t-esc="folder.parent_name"/>
+                            </div>
+                        </button>
+                    </t>
+                </div>
+            </div>
+            <h4 t-if="documentFolders.length" class="o_documents_section_title o_documents_files_title w-100 mb-3">
+                Files
+            </h4>
+        </xpath>
+    </t>
+
+</templates>

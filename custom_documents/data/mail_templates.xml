@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="mail_template_document_request" model="mail.template">
+            <field name="name">Documents: Document Request</field>
+            <field name="model_id" ref="model_documents_document"/>
+            <field name="subject">Document Request : {{ object.name }}</field>
+            <field name="email_to" eval="False"/>
+            <field name="partner_to">{{ object.partner_id.id or (object.request_user_id.partner_id.id if object.request_user_id and object.request_user_id.partner_id else False) }}</field>
+            <field name="use_default_to" eval="False"/>
+            <field name="body_html" type="html">
+<div style="margin:0; padding:0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#212529; background-color:#ffffff;">
+    <div style="max-width:900px; margin:0 auto; padding:38px 32px;">
+        <t t-set="recipient_name" t-value="object.partner_id.name or (object.request_user_id.name if object.request_user_id else '')"/>
+        <t t-if="recipient_name">
+            <p style="margin:0 0 24px 0; line-height:1.6;">Hello <t t-out="recipient_name"/>,</p>
+        </t>
+        <p style="margin:0 0 24px 0; line-height:1.6;">
+            <strong><t t-out="object.requested_by_id.name"/></strong>
+            <t t-if="object.requested_by_id.email">
+                (<t t-out="object.requested_by_id.email"/>)
+            </t>
+            asks you to provide the following document:
+        </p>
+
+        <div style="border-top:1px solid #e5e7eb; border-bottom:1px solid #e5e7eb; padding:26px 0; margin:0 0 24px 0; text-align:center;">
+            <p style="margin:0 0 22px 0; font-size:20px; line-height:1.4; font-weight:700; text-align:center;">
+                <t t-out="object.name"/>
+            </p>
+            <t t-if="object.request_note">
+                <div t-field="object.request_note" style="margin:0; font-style:italic;"/>
+            </t>
+            <t t-if="object.request_share_url">
+                <p style="margin:24px 0 0 0;">
+                    <a t-att-href="object.request_share_url"
+                       style="display:inline-block; padding:14px 28px; background-color:#875a7b; color:#ffffff; text-decoration:none; border-radius:5px; font-weight:600;">
+                        Upload the requested document
+                    </a>
+                </p>
+            </t>
+        </div>
+
+        <t t-if="object.request_deadline">
+            <p style="margin:0 0 16px 0;">Please provide us with the missing document before <t t-out="object.request_deadline"/>.</p>
+        </t>
+
+        <p style="margin:0 0 8px 0;">--</p>
+        <p style="margin:0 0 30px 0;"><t t-out="object.requested_by_id.name"/></p>
+
+        <div style="border-top:1px solid #e5e7eb; margin-top:28px; padding-top:18px;">
+            <p style="margin:0 0 18px 0; line-height:1.6;">
+                <t t-out="object.company_id.name"/>
+            </p>
+            <p style="margin:0; text-align:center; color:#6b7280; line-height:1.6;">Powered by Odoo Documents</p>
+        </div>
+    </div>
+</div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+    </data>
+</odoo>

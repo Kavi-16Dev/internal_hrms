@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ==================================================================
+         Documents settings, embedded into the real Odoo General Settings
+         screen (Settings app) using the native <app>/<block>/<setting>
+         widget system (Odoo 17+), exactly like every core Odoo app does.
+         Clicking Documents > Configuration > Settings opens this same
+         screen, scrolled/highlighted to the "Documents" app.
+         ================================================================== -->
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.custom.documents</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="priority" eval="70"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Documents" name="custom_documents">
+
+                    <block title="Trash Management" name="documents_trash_management">
+                        <setting string="Deletion delay (days)"
+                                 help="Time before documents in the Trash are permanently deleted.">
+                            <field name="documents_deletion_delay"/>
+                        </setting>
+                    </block>
+
+                    <block title="Files Centralization" name="documents_files_centralization">
+
+                        <setting string="Default Project Folder"
+                                 help="Folder where new projects are created"
+                                 invisible="not documents_project_installed">
+                            <field name="documents_project_folder_id" placeholder="Projects"/>
+                        </setting>
+
+                        <setting string="Sign"
+                                 help="Link Sign Templates to directories"
+                                 invisible="not documents_sign_installed">
+                            <button name="action_open_sign_templates" type="object"
+                                    string="Go to Sign Document Templates" class="btn-link px-0"/>
+                        </setting>
+
+                        <setting string="Product"
+                                 help="Centralize files attached to products"
+                                 invisible="not documents_product_installed">
+                            <field name="documents_product_settings"/>
+                            <div class="content-group" invisible="not documents_product_settings">
+                                <div class="mt8">
+                                    <label for="documents_product_folder_id" string="Folder"/>
+                                    <field name="documents_product_folder_id"/>
+                                </div>
+                            </div>
+                        </setting>
+
+                        <setting string="Accounting"
+                                 help="Centralize accounting files and documents"
+                                 invisible="not documents_account_installed">
+                            <div class="mt8">
+                                <label for="documents_account_folder_id" string="Folder"/>
+                                <field name="documents_account_folder_id"/>
+                            </div>
+                        </setting>
+
+                        <setting string="Approvals"
+                                 help="Centralize files attached to Approvals"
+                                 invisible="not documents_approval_installed">
+                            <field name="documents_approval_settings"/>
+                            <div class="content-group" invisible="not documents_approval_settings">
+                                <div class="mt8">
+                                    <label for="documents_approval_folder_id" string="Folder"/>
+                                    <field name="documents_approval_folder_id"/>
+                                </div>
+                                <div class="mt8">
+                                    <label for="documents_approval_tag_ids" string="Tags"/>
+                                    <field name="documents_approval_tag_ids" widget="many2many_tags"/>
+                                </div>
+                            </div>
+                        </setting>
+
+                        <setting string="Human Resources"
+                                 help="Centralize your employees' documents (contracts, payslips, etc.)">
+                            <field name="documents_hr_settings"/>
+                            <div class="content-group" invisible="not documents_hr_settings">
+                                <div class="mt8">
+                                    <label for="documents_hr_folder_id" string="Employees Folder"/>
+                                    <field name="documents_hr_folder_id"/>
+                                </div>
+                                <div class="mt8">
+                                    <label for="documents_hr_subfolders" string="Employees Subfolders"/>
+                                    <field name="documents_hr_subfolders"/>
+                                </div>
+                                <div class="mt8">
+                                    <span class="o_form_label">Default tags</span>
+                                </div>
+                                <div class="mt4 ms-3">
+                                    <label for="documents_hr_contract_tag_ids" string="Contracts"/>
+                                    <field name="documents_hr_contract_tag_ids" widget="many2many_tags"/>
+                                </div>
+                                <div class="mt4 ms-3">
+                                    <label for="documents_hr_payslip_tag_ids" string="Payslip"/>
+                                    <field name="documents_hr_payslip_tag_ids" widget="many2many_tags"/>
+                                </div>
+                            </div>
+                        </setting>
+
+                        <setting string="Recruitment"
+                                 help="Centralize resumes and other recruitment documents"
+                                 invisible="not documents_recruitment_installed">
+                            <field name="documents_recruitment_settings"/>
+                            <div class="content-group" invisible="not documents_recruitment_settings">
+                                <div class="mt8">
+                                    <label for="documents_recruitment_folder_id" string="Folder"/>
+                                    <field name="documents_recruitment_folder_id" placeholder="Recruitment"/>
+                                </div>
+                                <div class="mt8">
+                                    <label for="documents_recruitment_tag_ids" string="Tags"/>
+                                    <field name="documents_recruitment_tag_ids" widget="many2many_tags"/>
+                                </div>
+                                <div class="mt8 text-muted">
+                                    The "Create an Applicant" action is available on any file in
+                                    this folder (leave the folder empty to allow it everywhere).
+                                </div>
+                            </div>
+                        </setting>
+
+                        <setting string="Fleet"
+                                 help="Centralize your Fleet' documents (fines, etc.)"
+                                 invisible="not documents_fleet_installed">
+                            <field name="documents_fleet_settings"/>
+                            <div class="content-group" invisible="not documents_fleet_settings">
+                                <div class="mt8">
+                                    <label for="documents_fleet_folder_id" string="Folder"/>
+                                    <field name="documents_fleet_folder_id"/>
+                                </div>
+                                <div class="mt8">
+                                    <label for="documents_fleet_tag_ids" string="Tags"/>
+                                    <field name="documents_fleet_tag_ids" widget="many2many_tags"/>
+                                </div>
+                            </div>
+                        </setting>
+
+                    </block>
+
+                    <block title="Sharing &amp; Requests" name="documents_sharing_requests">
+                        <setting string="Default Share Link Validity (days)"
+                                 help="Number of days a new share link stays active by default. 0 = never expires.">
+                            <field name="documents_share_default_validity"/>
+                        </setting>
+                        <setting string="Default Request Deadline (days)"
+                                 help="Default number of days given to fulfil a document request.">
+                            <field name="documents_request_default_deadline"/>
+                        </setting>
+                        <setting string="Spreadsheet Templates Workspace"
+                                 help="Workspace browsed by default from Configuration &gt; Spreadsheet Templates.">
+                            <field name="documents_spreadsheet_folder_id"/>
+                        </setting>
+                    </block>
+
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Kept so existing menu / external references do not break; it simply
+         opens the real Settings screen scrolled to the Documents app. -->
+    <record id="documents_config_settings_action" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'module': 'custom_documents', 'bin_size': False}</field>
+    </record>
+
+</odoo>

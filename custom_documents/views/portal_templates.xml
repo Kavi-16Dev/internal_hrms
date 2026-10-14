@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="portal_share_page" name="Document Share">
+        <div class="o_documents_share_page" style="max-width:900px;margin:40px auto;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#212529;">
+            <t t-if="not valid">
+                <div style="padding:16px;border:1px solid #f0c36d;background:#fff8e5;border-radius:6px;">
+                    This share link is no longer valid. It may have expired or been revoked by its owner.
+                </div>
+            </t>
+            <t t-else="1">
+                <h2 style="margin-bottom:24px;" t-out="share.name"/>
+
+                <t t-if="share.access_mode == 'upload'">
+                    <div style="padding:20px;border:1px solid #dee2e6;border-radius:6px;margin-bottom:24px;">
+                        <h4 style="margin-top:0;">Upload the requested document</h4>
+                        <p style="color:#6c757d;">Select the file you want to provide and submit it securely.</p>
+                        <form t-attf-action="/document/share/#{share.access_token}/upload"
+                              method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <input type="file" name="upload_file" required="required"
+                                   style="display:block;width:100%;margin-bottom:16px;"/>
+                            <button type="submit"
+                                    style="border:0;background:#875a7b;color:#fff;padding:10px 20px;border-radius:5px;cursor:pointer;">
+                                Upload
+                            </button>
+                        </form>
+                    </div>
+                </t>
+
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;padding:10px;border-bottom:1px solid #dee2e6;">Name</th>
+                            <th style="text-align:left;padding:10px;border-bottom:1px solid #dee2e6;">Status</th>
+                            <th style="padding:10px;border-bottom:1px solid #dee2e6;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="documents" t-as="document">
+                            <td style="padding:10px;border-bottom:1px solid #eee;" t-out="document.name"/>
+                            <td style="padding:10px;border-bottom:1px solid #eee;">
+                                <span t-if="document.state == 'requested'" style="color:#856404;">Awaiting upload</span>
+                                <span t-else="1" style="color:#198754;">Available</span>
+                            </td>
+                            <td style="padding:10px;border-bottom:1px solid #eee;text-align:right;">
+                                <a t-if="share.access_mode in ('download', 'upload') and document.attachment_id"
+                                   t-attf-href="/document/share/#{share.access_token}/download/#{document.id}"
+                                   style="color:#875a7b;text-decoration:none;">Download</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+        </div>
+    </template>
+
+</odoo>

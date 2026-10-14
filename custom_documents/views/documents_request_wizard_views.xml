@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="documents_request_wizard_view_form" model="ir.ui.view">
+        <field name="name">documents.request.wizard.form</field>
+        <field name="model">documents.request.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Request a file" class="o_documents_request_wizard">
+                <group col="2">
+                    <group>
+                        <field name="name" placeholder="e.g. Missing Expense"/>
+                        <field name="request_type" invisible="1"/>
+                        <field name="request_to_id" string="Request To"
+                               widget="many2one_avatar_partner"
+                               options="{'no_create': True, 'no_quick_create': True}"
+                               context="{'tree_view_ref': 'custom_documents.documents_request_partner_view_tree', 'search_view_ref': 'custom_documents.documents_request_partner_view_search'}"
+                               placeholder="Select a contact..."
+                               help="Person or company who must provide the requested document."/>
+                        <field name="partner_id" string="Contact"
+                               readonly="1"
+                               required="1"
+                               help="Contact associated with the person receiving this request."/>
+                        <field name="request_user_id" invisible="1"/>
+                        <field name="request_partner_id" invisible="1"/>
+                        <label for="request_deadline_in" string="Due Date In"/>
+                        <div class="o_row">
+                            <field name="request_deadline_in" nolabel="1" class="oe_inline"/>
+                            <field name="request_deadline_unit" nolabel="1" class="oe_inline"/>
+                        </div>
+                        <field name="activity_type" string="Activity type"
+                               help="Activity type associated with the document request."/>
+                    </group>
+                    <group>
+                        <field name="folder_id" string="Folder"
+                               help="Workspace where the requested document will be stored."/>
+                        <field name="tag_ids" widget="many2many_tags" string="Tags"
+                               options="{'no_create_edit': False}"
+                               help="Optional tags for the requested document."/>
+                        <field name="resource_model" string="Resource Model" readonly="1"/>
+                        <field name="resource_id" string="Resource ID" readonly="1"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="request_note" string="Message" widget="html" placeholder="Type '/' for commands"/>
+                    <field name="request_deadline" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="request_document" type="object" string="Request"
+                            class="btn-primary"
+                            help="Create the document request and notify the selected recipient."/>
+                    <button string="Discard" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="documents_request_wizard_action" model="ir.actions.act_window">
+        <field name="name">Request a file</field>
+        <field name="res_model">documents.request.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- The native Documents Request To picker searches contacts, not only
+         internal users.  A dedicated search/list view reproduces the
+         Search: Request To dialog from the reference flow (Name, Email,
+         Phone, Activities and Country) without changing the global
+         res.partner views used by the rest of the database. -->
+    <record id="documents_request_partner_view_search" model="ir.ui.view">
+        <field name="name">documents.request.partner.search</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search string="Search: Request To">
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="country_id"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="documents_request_partner_view_tree" model="ir.ui.view">
+        <field name="name">documents.request.partner.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Search: Request To" create="0" edit="0">
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="activity_ids" widget="list_activity" string="Activities"/>
+                <field name="country_id"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

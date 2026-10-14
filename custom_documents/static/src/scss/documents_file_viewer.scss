@@ -1,0 +1,369 @@
+.o_documents_file_viewer {
+    .o_documents_file_viewer_header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1200;
+        display: flex;
+        align-items: center;
+        height: 46px;
+        padding: 0 12px;
+        gap: 8px;
+        background-color: #1a1d21;
+        color: #fff;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .o_documents_file_viewer_title {
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 40vw;
+    }
+
+    .o_documents_file_viewer_header_spacer {
+        flex: 1 1 auto;
+    }
+
+    .o_documents_file_viewer_btn {
+        white-space: nowrap;
+    }
+
+    .o_documents_file_viewer_close {
+        color: #fff;
+        font-size: 1.1rem;
+
+        &:hover {
+            color: rgba(255, 255, 255, 0.7);
+        }
+    }
+
+    .o_documents_file_viewer_body {
+        position: fixed;
+        top: 46px; // overridden inline once measured against the real navbar
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1100;
+        display: flex;
+        align-items: stretch;
+        overflow: hidden;
+        background-color: #e9e9e9;
+    }
+
+    .o_documents_file_viewer_content {
+        position: relative;
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+    }
+
+    .o_documents_file_viewer_iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background-color: #fff;
+    }
+
+    .o_documents_file_viewer_image_wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+
+        img {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+        }
+    }
+
+    .o_documents_file_viewer_placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: rgba(0, 0, 0, 0.6);
+        text-align: center;
+    }
+
+    // Compact cluster overlaid on the top-right corner of the content
+    // area (record pager, prev/next, info toggle) - styled to sit flush
+    // with the PDF viewer's own light toolbar row, exactly like the
+    // reference Documents app, instead of floating dark controls.
+    .o_documents_file_viewer_toolbar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        height: 33px;
+        padding: 0 8px;
+        gap: 2px;
+        background-color: #f9f9fa;
+        border-left: 1px solid rgba(0, 0, 0, 0.08);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        color: #54595e;
+        font-size: 0.8rem;
+    }
+
+    .o_documents_file_viewer_pager {
+        padding: 0 6px;
+        white-space: nowrap;
+        color: #54595e;
+    }
+
+    .o_documents_file_viewer_toolbar_btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border: none;
+        border-radius: 2px;
+        background-color: transparent;
+        color: #54595e;
+
+        &:hover:not(:disabled) {
+            background-color: rgba(0, 0, 0, 0.08);
+        }
+
+        &:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+    }
+
+    .o_documents_file_viewer_toolbar_btn_active {
+        background-color: rgba(0, 0, 0, 0.12);
+    }
+
+    .o_documents_file_viewer_info {
+        flex: 0 0 320px;
+        max-width: 320px;
+        background-color: #fff;
+        border-left: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        z-index: 2;
+    }
+
+    .o_documents_file_viewer_info_header {
+        display: flex;
+        align-items: center;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .o_documents_file_viewer_info_body {
+        padding: 12px;
+        overflow-y: auto;
+    }
+
+    .o_documents_info_tag {
+        cursor: pointer;
+        background-color: #e9e9e9;
+        color: #444;
+        border: 1px solid transparent;
+
+        &:hover {
+            background-color: #dcdcdc;
+        }
+    }
+
+    .o_documents_info_tag_selected {
+        background-color: #714b67;
+        color: #fff;
+    }
+}
+
+/* -------------------------------------------------------------------------
+ * Internal document Share dialog.
+ * The dimensions are fluid; no environment-specific coordinates are used.
+ * ---------------------------------------------------------------------- */
+.o_documents_share_dialog {
+    min-height: 260px;
+
+    .o_documents_share_people_picker {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        position: relative;
+        padding-bottom: 14px;
+    }
+
+    .o_documents_share_people_icon {
+        width: 34px;
+        padding-top: 8px;
+        font-size: 21px;
+    }
+
+    .o_documents_share_people_field {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+        border-bottom: 1px solid #8b8b8b;
+        padding: 4px 0 6px;
+    }
+
+    .o_documents_share_chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    .o_documents_share_chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 16px;
+        padding: 4px 9px;
+        background: #eadfe7;
+        color: #3f2d3b;
+        font-size: 13px;
+    }
+
+    .o_documents_share_people_input {
+        width: 100%;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font-size: 16px;
+        padding: 4px 0;
+    }
+
+    .o_documents_share_suggestions {
+        position: absolute;
+        z-index: 1100;
+        left: 0;
+        right: 0;
+        top: 100%;
+        background: white;
+        border: 1px solid #d6d6d6;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, .15);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .o_documents_share_suggestion {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 0;
+        background: white;
+        padding: 9px 12px;
+        text-align: left;
+    }
+
+    .o_documents_share_suggestion:hover {
+        background: #f4f4f4;
+    }
+
+    .o_documents_share_avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #7d5a92;
+        color: white;
+        font-weight: 600;
+    }
+
+    .o_documents_share_section {
+        padding: 6px 0;
+    }
+
+    .o_documents_share_row,
+    .o_documents_share_general_row,
+    .o_documents_share_access_link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 8px 0;
+    }
+
+    .o_documents_share_label {
+        font-weight: 500;
+        min-width: 120px;
+    }
+
+    .o_documents_share_select {
+        max-width: 260px;
+    }
+
+    .o_documents_share_message {
+        margin: 10px 0 12px;
+        resize: vertical;
+    }
+
+    .o_documents_share_link_chip {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.o_documents_share_selected_header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 0 18px;
+    border-bottom: 1px solid #d9d9d9;
+}
+
+.o_documents_share_selected_header .o_documents_share_people_icon {
+    flex: 0 0 34px;
+}
+
+.o_documents_share_selected_header .o_documents_share_chips {
+    margin: 0;
+}
+
+.o_documents_share_controls {
+    margin-left: 48px;
+    padding-top: 10px;
+}
+
+.o_documents_share_you_badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #714b67;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.o_documents_share_avatar_recipient {
+    background: #a65d3d;
+}
+
+.o_documents_share_selected_people {
+    margin-left: 48px;
+    margin-bottom: 8px;
+}
+
+.o_documents_share_access_list {
+    padding: 8px 0 12px;
+}
+
+.o_documents_share_access_person {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}

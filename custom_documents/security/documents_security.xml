@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- ============================================================ -->
+        <!-- Documents application privilege                             -->
+        <!-- ============================================================ -->
+        <!--
+            Odoo 19 renders application privileges from res.groups.privilege
+            automatically in Settings -> Users -> Access Rights through the
+            standard res_user_group_ids/res_user_group_ids_privilege widget.
+
+            The hierarchy below intentionally contains four levels so the
+            Documents selector behaves like the standard Documents app:
+
+                No Access
+                Basic
+                User
+                Administrator
+                System Administrator
+
+            User -> Basic, Administrator -> User, System Administrator ->
+            Administrator.  Existing installations keep their old group XML
+            ids, so existing memberships continue to work after upgrade.
+        -->
+
+        <!-- Kept for backward compatibility with the original module.  The
+             actual privilege is placed in Odoo's standard Productivity
+             category so it appears in the same section as Documents in the
+             Odoo 19 Users form. -->
+        <record id="module_category_documents" model="ir.module.category">
+            <field name="name">Documents</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <record id="res_groups_privilege_documents" model="res.groups.privilege">
+            <field name="name">Documents</field>
+            <field name="category_id" ref="base.module_category_productivity"/>
+            <field name="sequence">30</field>
+            <field name="placeholder">No</field>
+        </record>
+
+        <!-- Basic -->
+        <record id="group_documents_basic" model="res.groups">
+            <field name="name">Basic</field>
+            <field name="privilege_id" ref="res_groups_privilege_documents"/>
+            <field name="sequence">10</field>
+            <field name="comment">
+                Can view or edit, upload, and share their own or shared documents.
+            </field>
+        </record>
+
+        <!-- User -->
+        <!-- This keeps the original XML id so existing users who already had
+             custom_documents.group_documents_user automatically become
+             Documents / User. -->
+        <record id="group_documents_user" model="res.groups">
+            <field name="name">User</field>
+            <field name="privilege_id" ref="res_groups_privilege_documents"/>
+            <field name="sequence">20</field>
+            <field name="implied_ids" eval="[(4, ref('group_documents_basic'))]"/>
+            <field name="comment">
+                Can embed actions on folders, insert in Spreadsheet, and import in Sign.
+            </field>
+        </record>
+
+        <!-- Administrator -->
+        <!-- This keeps the original manager XML id for backward
+             compatibility with existing record rules and Python checks. -->
+        <record id="group_documents_manager" model="res.groups">
+            <field name="name">Administrator</field>
+            <field name="privilege_id" ref="res_groups_privilege_documents"/>
+            <field name="sequence">30</field>
+            <field name="implied_ids" eval="[(4, ref('group_documents_user'))]"/>
+            <field name="comment">
+                Can configure folders, manage access rights, and oversee all documents within their areas.
+            </field>
+            <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- System Administrator -->
+        <record id="group_documents_system" model="res.groups">
+            <field name="name">System Administrator</field>
+            <field name="privilege_id" ref="res_groups_privilege_documents"/>
+            <field name="sequence">40</field>
+            <field name="implied_ids" eval="[(4, ref('group_documents_manager'))]"/>
+            <field name="comment">
+                Has full control over all document settings, folders, and user rights across the application.
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- Basic Access Rights compatibility -->
+        <!-- ============================================================ -->
+        <!--
+            Odoo's standard "Basic Access Rights" group is base.group_user.
+            Keep the existing Documents privilege hierarchy untouched, but
+            also give internal users with only Basic Access Rights the same
+            read boundary as Documents Basic.  This is deliberately read-only
+            at the ACL level and does not grant create/write/delete access.
+        -->
+        <record id="rule_folder_internal_basic" model="ir.rule">
+            <field name="name">Documents Basic Access Rights: accessible workspaces</field>
+            <field name="model_id" ref="model_documents_folder"/>
+            <field name="domain_force">[
+                '|',
+                '&amp;', ('folder_type', '=', 'custom'),
+                    ('employee_id.user_id', '=', user.id),
+                '|',
+                '&amp;', ('folder_type', '=', 'employee'), ('user_id', '=', user.id),
+                '&amp;', ('folder_type', '=', 'custom'), ('employee_id', '=', False),
+            ]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="rule_document_internal_basic" model="ir.rule">
+            <field name="name">Documents Basic Access Rights: accessible documents</field>
+            <field name="model_id" ref="model_documents_document"/>
+            <field name="domain_force">[
+                '|', '|',
+                ('employee_id.user_id', '=', user.id),
+                '&amp;', ('employee_id', '=', False), ('owner_id', '=', user.id),
+                '&amp;', ('employee_id', '=', False), ('request_user_id', '=', user.id),
+            ]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="rule_document_version_internal_basic" model="ir.rule">
+            <field name="name">Documents Basic Access Rights: document versions</field>
+            <field name="model_id" ref="model_documents_document_version"/>
+            <field name="domain_force">[
+                ('document_id', '!=', False),
+                '|', '|',
+                ('document_id.employee_id.user_id', '=', user.id),
+                '&amp;', ('document_id.employee_id', '=', False), ('document_id.owner_id', '=', user.id),
+                '&amp;', ('document_id.employee_id', '=', False), ('document_id.request_user_id', '=', user.id),
+            ]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="rule_tag_internal_basic" model="ir.rule">
+            <field name="name">Documents Basic Access Rights: document tags</field>
+            <field name="model_id" ref="model_documents_tag"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="rule_tag_category_internal_basic" model="ir.rule">
+            <field name="name">Documents Basic Access Rights: tag categories</field>
+            <field name="model_id" ref="model_documents_tag_category"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- Folder record rules -->
+        <!-- ============================================================ -->
+        <record id="rule_folder_manager_all" model="ir.rule">
+            <field name="name">Documents Administrators: see every workspace</field>
+            <field name="model_id" ref="model_documents_folder"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_documents_manager'))]"/>
+        </record>
+
+        <record id="rule_folder_user" model="ir.rule">
+            <field name="name">Documents Users: company drive, own employee drive or non-employee custom workspace</field>
+            <field name="model_id" ref="model_documents_folder"/>
+            <field name="domain_force">[
+                '|',
+                '&amp;', ('folder_type', '=', 'custom'),
+                    ('employee_id.user_id', '=', user.id),
+                '|',
+                '&amp;', ('folder_type', '=', 'employee'), ('user_id', '=', user.id),
+                '&amp;', ('folder_type', '=', 'custom'), ('employee_id', '=', False),
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_documents_basic'))]"/>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- Document record rules -->
+        <!-- ============================================================ -->
+        <record id="rule_document_manager_all" model="ir.rule">
+            <field name="name">Documents Administrators: see every document</field>
+            <field name="model_id" ref="model_documents_document"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_documents_manager'))]"/>
+        </record>
+
+        <record id="rule_document_user" model="ir.rule">
+            <field name="name">Documents Users: own employee documents and existing personal workflows</field>
+            <field name="model_id" ref="model_documents_document"/>
+            <field name="domain_force">[
+                '|', '|',
+                ('employee_id.user_id', '=', user.id),
+                '&amp;', ('employee_id', '=', False), ('owner_id', '=', user.id),
+                '&amp;', ('employee_id', '=', False), ('request_user_id', '=', user.id),
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_documents_basic'))]"/>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- Share record rules -->
+        <!-- ============================================================ -->
+        <record id="rule_share_manager_all" model="ir.rule">
+            <field name="name">Documents Administrators: see every share link</field>
+            <field name="model_id" ref="model_documents_share"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_documents_manager'))]"/>
+        </record>
+
+        <record id="rule_share_user" model="ir.rule">
+            <field name="name">Documents Users: own share links only</field>
+            <field name="model_id" ref="model_documents_share"/>
+            <field name="domain_force">['|', ('owner_id', '=', user.id), ('recipient_user_ids', 'in', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_documents_basic'))]"/>
+        </record>
+
+    </data>
+</odoo>

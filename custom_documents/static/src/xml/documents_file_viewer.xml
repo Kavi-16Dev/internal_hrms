@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="custom_documents.FileViewer">
+        <div class="o_documents_file_viewer" t-on-click="(ev) => ev.stopPropagation()">
+            <div class="o_documents_file_viewer_header" t-ref="header">
+                <i t-if="isLocked" class="fa fa-lock me-1" t-att-title="lockLabel"/>
+                <span class="o_documents_file_viewer_title" t-esc="record.name"/>
+                <div class="o_documents_file_viewer_header_spacer"/>
+                <Dropdown>
+                    <button class="btn btn-secondary o_documents_file_viewer_btn">
+                        <i class="fa fa-cog me-1"/>Actions
+                    </button>
+                    <t t-set-slot="content">
+                        <DropdownItem onSelected="() => this.onDuplicate()">
+                            <i class="fa fa-fw fa-files-o me-2"/>Duplicate
+                        </DropdownItem>
+                        <DropdownItem t-if="canTrash" onSelected="() => this.onTrash()">
+                            <i class="fa fa-fw fa-trash me-2"/>Move to Trash
+                        </DropdownItem>
+                        <DropdownItem onSelected="() => this.onRename()">
+                            <i class="fa fa-fw fa-pencil me-2"/>Rename
+                        </DropdownItem>
+                        <DropdownItem onSelected="() => this.onToggleInfo()">
+                            <i class="fa fa-fw fa-info-circle me-2"/>Info &amp; tags
+                        </DropdownItem>
+                        <DropdownItem onSelected="() => this.onMove()">
+                            <i class="fa fa-fw fa-arrow-right me-2"/>Move
+                        </DropdownItem>
+                        <DropdownItem onSelected="() => this.onCreateShortcut()">
+                            <i class="fa fa-fw fa-share-square-o me-2"/>Create Shortcut
+                        </DropdownItem>
+                        <DropdownItem onSelected="() => this.onManageVersions()">
+                            <i class="fa fa-fw fa-history me-2"/>Manage Versions
+                        </DropdownItem>
+                        <DropdownItem onSelected="() => this.onToggleLock()">
+                            <i class="fa fa-fw" t-att-class="isLocked ? 'fa-unlock' : 'fa-lock'"
+                               style="margin-right: 8px;"/><t t-esc="lockLabel"/>
+                        </DropdownItem>
+                        <DropdownItem onSelected="() => this.onCopyLink()">
+                            <i class="fa fa-fw fa-link me-2"/>Copy Links
+                        </DropdownItem>
+                        <DropdownItem t-if="isPdf" onSelected="() => this.onSplitPdf()">
+                            <i class="fa fa-fw fa-scissors me-2"/>Split PDF
+                        </DropdownItem>
+                        <div class="dropdown-divider"/>
+                        <DropdownItem onSelected="() => this.openFormView()">
+                            <i class="fa fa-fw fa-external-link me-2"/>Open Details
+                        </DropdownItem>
+                        <DropdownItem t-if="canRestore" onSelected="() => this.onRestore()">
+                            <i class="fa fa-fw fa-undo me-2"/>Restore
+                        </DropdownItem>
+                        <DropdownItem t-if="canDeletePermanently" onSelected="() => this.onDeletePermanently()">
+                            <i class="fa fa-fw fa-times me-2"/>Delete Permanently
+                        </DropdownItem>
+                    </t>
+                </Dropdown>
+                <button t-if="canDownload" class="btn btn-secondary o_documents_file_viewer_btn"
+                        t-on-click="onDownload">
+                    <i class="fa fa-download me-1"/>Download
+                </button>
+                <button t-if="canShare" class="btn btn-secondary o_documents_file_viewer_btn"
+                        t-on-click="onShare">
+                    <i class="fa fa-share-alt me-1"/>Share
+                </button>
+                <button t-if="canCreateApplicant" class="btn btn-secondary o_documents_file_viewer_btn"
+                        t-on-click="onCreateApplicant">
+                    <i class="fa fa-user-plus me-1"/>Create an Applicant
+                </button>
+                <span class="o_documents_build_marker" title="Module build version">v2.1.8</span>
+                <button class="btn btn-link o_documents_file_viewer_close" t-on-click="() => this.props.close()"
+                        title="Close">
+                    <i class="fa fa-times"/>
+                </button>
+            </div>
+
+            <div class="o_documents_file_viewer_body" t-ref="body">
+                <div class="o_documents_file_viewer_content">
+                    <iframe t-if="isPdf" t-att-src="pdfViewerUrl" class="o_documents_file_viewer_iframe"/>
+                    <div t-elif="isImage" class="o_documents_file_viewer_image_wrap">
+                        <img t-att-src="contentUrl" t-att-alt="record.name"/>
+                    </div>
+                    <div t-elif="isUrlDocument" class="o_documents_file_viewer_placeholder">
+                        <i class="fa fa-link fa-4x mb-3"/>
+                        <div class="mb-3" t-esc="record.url"/>
+                        <button class="btn btn-primary" t-on-click="onOpenLink">
+                            <i class="fa fa-external-link me-1"/>Open Link
+                        </button>
+                    </div>
+                    <div t-else="" class="o_documents_file_viewer_placeholder">
+                        <i class="fa fa-file-o fa-4x mb-3"/>
+                        <div class="mb-3">No preview available for this file.</div>
+                        <button t-if="canDownload" class="btn btn-primary" t-on-click="onDownload">
+                            <i class="fa fa-download me-1"/>Download
+                        </button>
+                    </div>
+
+                    <!-- Compact toolbar cluster overlaid top-right of the
+                         content area, in line with the PDF viewer's own
+                         toolbar row: record pager + prev/next + info
+                         toggle, mirroring the reference Documents app. -->
+                    <div class="o_documents_file_viewer_toolbar">
+                        <div t-if="hasMultiple" class="o_documents_file_viewer_pager">
+                            <span t-esc="state.index + 1"/>
+                            <span class="mx-1">/</span>
+                            <span t-esc="props.records.length"/>
+                        </div>
+                        <button t-if="hasMultiple" class="o_documents_file_viewer_toolbar_btn"
+                                t-att-disabled="!hasPrevious" t-on-click="previous" title="Previous">
+                            <i class="fa fa-chevron-left"/>
+                        </button>
+                        <button t-if="hasMultiple" class="o_documents_file_viewer_toolbar_btn"
+                                t-att-disabled="!hasNext" t-on-click="next" title="Next">
+                            <i class="fa fa-chevron-right"/>
+                        </button>
+                        <button class="o_documents_file_viewer_toolbar_btn"
+                                t-att-class="{'o_documents_file_viewer_toolbar_btn_active': state.infoOpen}"
+                                t-on-click="onToggleInfo" title="Info &amp; tags">
+                            <i class="fa fa-info-circle"/>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- "Info &amp; tags" slide-in panel, toggled from the Actions menu -->
+                <div t-if="state.infoOpen" class="o_documents_file_viewer_info">
+                    <div class="o_documents_file_viewer_info_header">
+                        <strong>Info</strong>
+                        <button class="btn btn-link btn-sm ms-auto" t-on-click="closeInfoPanel" title="Close">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </div>
+                    <div t-if="state.infoLoading" class="p-3 text-muted">Loading...</div>
+                    <div t-elif="state.info" class="o_documents_file_viewer_info_body">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Name</label>
+                            <input type="text" class="form-control form-control-sm"
+                                   t-att-value="state.info.name" t-on-change="onInfoNameChange"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted d-block">Tags</label>
+                            <span t-foreach="state.info.allTags" t-as="tag" t-key="tag.id"
+                                  class="badge me-1 mb-1 o_documents_info_tag"
+                                  t-att-class="{'o_documents_info_tag_selected': state.info.tag_ids.includes(tag.id)}"
+                                  t-on-click="() => this.onToggleTag(tag.id)"
+                                  t-esc="tag.name"/>
+                            <div t-if="!state.info.allTags.length" class="text-muted small">No tags configured.</div>
+                        </div>
+                        <div class="mb-2 small">
+                            <span class="text-muted">Owner: </span>
+                            <span t-esc="state.info.owner_id ? state.info.owner_id[1] : '—'"/>
+                        </div>
+                        <div class="mb-2 small">
+                            <span class="text-muted">Workspace: </span>
+                            <span t-esc="state.info.folder_id ? state.info.folder_id[1] : '—'"/>
+                        </div>
+                        <div class="mb-2 small" t-if="state.info.partner_id">
+                            <span class="text-muted">Contact: </span>
+                            <span t-esc="state.info.partner_id[1]"/>
+                        </div>
+                        <div class="mb-2 small" t-if="state.info.res_name">
+                            <span class="text-muted">Related Record: </span>
+                            <span t-esc="state.info.res_name"/>
+                        </div>
+                        <div class="mb-2 small">
+                            <span class="text-muted">Size: </span>
+                            <span t-esc="formatFileSize(state.info.file_size)"/>
+                        </div>
+                        <div class="mb-2 small" t-if="state.info.lock_uid">
+                            <span class="text-muted">Locked by: </span>
+                            <span t-esc="state.info.lock_uid[1]"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="custom_documents.LinkDialog">
+        <Dialog title="title" size="'sm'">
+            <div class="o_documents_link_dialog">
+                <div class="mb-3">
+                    <label class="form-label" for="documents_link_name">Name</label>
+                    <input id="documents_link_name" type="text" class="form-control"
+                           t-model="state.name" placeholder="e.g. Project Specification"
+                           autofocus=""/>
+                </div>
+                <div class="mb-1">
+                    <label class="form-label" for="documents_link_url">Link</label>
+                    <input id="documents_link_url" type="text" class="form-control"
+                           t-model="state.url" placeholder="https://..."/>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-primary"
+                        t-att-disabled="isConfirmDisabled"
+                        t-on-click="onConfirm">
+                    Save
+                </button>
+                <button type="button" class="btn btn-secondary" t-on-click="onDiscard">
+                    Discard
+                </button>
+            </t>
+        </Dialog>
+    </t>
+
+    <t t-name="custom_documents.NewFolderDialog">
+        <Dialog title="title" size="'sm'">
+            <div class="o_documents_new_folder_dialog">
+                <div class="mb-1">
+                    <label class="form-label" for="documents_new_folder_name">Folder Name</label>
+                    <input id="documents_new_folder_name" type="text" class="form-control"
+                           t-model="state.name" placeholder="e.g. Contracts"
+                           autofocus=""
+                           t-on-keydown="onNameKeydown"/>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-primary"
+                        t-att-disabled="isConfirmDisabled"
+                        t-on-click="onConfirm">
+                    Create
+                </button>
+                <button type="button" class="btn btn-secondary" t-on-click="onDiscard">
+                    Discard
+                </button>
+            </t>
+        </Dialog>
+    </t>
+
+    <t t-name="custom_documents.RenameDialog">
+        <Dialog title="title" size="'sm'">
+            <div class="o_documents_rename_dialog">
+                <div class="mb-1">
+                    <label class="form-label" for="documents_rename_name">Name</label>
+                    <input id="documents_rename_name" type="text" class="form-control"
+                           t-model="state.name" autofocus="" select=""
+                           t-on-keydown="onNameKeydown"/>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-primary"
+                        t-att-disabled="isConfirmDisabled"
+                        t-on-click="onConfirm">
+                    Save
+                </button>
+                <button type="button" class="btn btn-secondary" t-on-click="onDiscard">
+                    Discard
+                </button>
+            </t>
+        </Dialog>
+    </t>
+
+    <t t-name="custom_documents.MoveDialog">
+        <Dialog title="title" size="'sm'">
+            <div class="o_documents_move_dialog">
+                <div class="mb-1">
+                    <label class="form-label" for="documents_move_folder">Destination Workspace</label>
+                    <select id="documents_move_folder" class="form-select"
+                            t-on-change="(ev) => this.state.folderId = parseInt(ev.target.value) || false">
+                        <option value="">-- Select a workspace --</option>
+                        <t t-foreach="state.folders" t-as="folder" t-key="folder.id">
+                            <option t-att-value="folder.id" t-esc="folder.display_name"/>
+                        </t>
+                    </select>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-primary"
+                        t-att-disabled="isConfirmDisabled"
+                        t-on-click="onConfirm">
+                    <t t-esc="confirmLabel"/>
+                </button>
+                <button type="button" class="btn btn-secondary" t-on-click="onDiscard">
+                    Discard
+                </button>
+            </t>
+        </Dialog>
+    </t>
+
+    <t t-name="custom_documents.VersionsDialog">
+        <Dialog title="title" size="'lg'">
+            <div class="o_documents_versions_dialog">
+                <div t-if="state.isLoading" class="text-muted p-3">Loading...</div>
+                <div t-elif="!state.versions.length" class="text-muted p-3">
+                    No previous versions yet. A version is saved automatically every time
+                    this file is replaced.
+                </div>
+                <table t-else="" class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Date</th>
+                            <th>By</th>
+                            <th>Size</th>
+                            <th/>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="state.versions" t-as="version" t-key="version.id">
+                            <td t-esc="version.name"/>
+                            <td t-esc="version.dateLabel"/>
+                            <td t-esc="version.userName"/>
+                            <td t-esc="formatSize(version.file_size)"/>
+                            <td class="text-end">
+                                <a t-if="version.downloadUrl" t-att-href="version.downloadUrl"
+                                   class="btn btn-sm btn-link" title="Download">
+                                    <i class="fa fa-download"/>
+                                </a>
+                                <button class="btn btn-sm btn-link"
+                                        t-on-click="() => this.onRestore(version.id)">
+                                    Restore
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-secondary" t-on-click="onClose">
+                    Close
+                </button>
+            </t>
+        </Dialog>
+    </t>
+
+    <t t-name="custom_documents.SplitPdfDialog">
+        <Dialog title="title" size="'sm'">
+            <div class="o_documents_split_pdf_dialog">
+                <div class="mb-1">
+                    <label class="form-label" for="documents_split_ranges">Page Ranges</label>
+                    <input id="documents_split_ranges" type="text" class="form-control"
+                           t-model="state.ranges" placeholder="e.g. 1-2,3,4-5" autofocus=""/>
+                    <div class="form-text">
+                        Each range becomes a new document in the same workspace (comma-separated,
+                        e.g. "1-2,3,4-5"). The original file is not modified.
+                    </div>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-primary"
+                        t-att-disabled="isConfirmDisabled"
+                        t-on-click="onConfirm">
+                    Split
+                </button>
+                <button type="button" class="btn btn-secondary" t-on-click="onDiscard">
+                    Discard
+                </button>
+            </t>
+        </Dialog>
+    </t>
+
+
+    <t t-name="custom_documents.ShareDialog">
+        <Dialog title="title" size="'lg'">
+            <div class="o_documents_share_dialog">
+                <t t-if="state.loading">
+                    <div class="d-flex justify-content-center align-items-center py-5 text-muted">
+                        <i class="fa fa-spinner fa-spin me-2"/>Loading…
+                    </div>
+                </t>
+                <t t-else="">
+                    <!-- Invite screen: before selecting a person, only the
+                         people/email input is shown, matching the reference. -->
+                    <t t-if="state.mode === 'invite' and !state.selectedUsers.length">
+                        <div class="o_documents_share_people_picker">
+                            <div class="o_documents_share_people_icon">
+                                <i class="fa fa-user-plus"/>
+                            </div>
+                            <div class="o_documents_share_people_field">
+                                <input type="text"
+                                       class="o_documents_share_people_input"
+                                       placeholder="Add people or email addresses"
+                                       t-model="state.search"
+                                       t-on-input="onSearchInput"
+                                       t-on-focus="onFocusSearch"
+                                       t-on-blur="onBlurSearch"
+                                       autocomplete="off"/>
+                                <div t-if="state.showSuggestions and state.suggestions.length"
+                                     class="o_documents_share_suggestions">
+                                    <t t-foreach="state.suggestions" t-as="person" t-key="person.id">
+                                        <button type="button"
+                                                class="o_documents_share_suggestion"
+                                                t-on-mousedown="() => this.addUser(person)">
+                                            <span class="o_documents_share_avatar">
+                                                <t t-esc="person.name.slice(0, 1).toUpperCase()"/>
+                                            </span>
+                                            <span class="d-flex flex-column text-start">
+                                                <strong t-esc="person.name"/>
+                                                <small class="text-muted" t-esc="person.email"/>
+                                            </span>
+                                        </button>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Invite screen after a person has been selected.  The
+                         search input is replaced by the selected chip, just as
+                         in the reference video. -->
+                    <t t-if="state.mode === 'invite' and state.selectedUsers.length">
+                        <div class="o_documents_share_selected_header">
+                            <div class="o_documents_share_people_icon">
+                                <i class="fa fa-user-plus"/>
+                            </div>
+                            <div class="o_documents_share_chips">
+                                <t t-foreach="state.selectedUsers" t-as="person" t-key="person.id">
+                                    <span class="o_documents_share_chip">
+                                        <span t-esc="person.name"/>
+                                        <button type="button"
+                                                class="btn btn-link p-0 ms-1"
+                                                t-on-click="() => this.removeUser(person.id)"
+                                                aria-label="Remove">
+                                            <i class="fa fa-times"/>
+                                        </button>
+                                    </span>
+                                </t>
+                            </div>
+                        </div>
+                        <div class="o_documents_share_controls">
+                            <div class="o_documents_share_row">
+                                <div class="o_documents_share_label">Role <span class="text-info">?</span></div>
+                                <select class="form-select form-select-sm o_documents_share_select"
+                                        t-on-change="onRoleChange">
+                                    <option value="viewer" t-att-selected="state.role === 'viewer'">Viewer</option>
+                                    <option value="editor" t-att-selected="state.role === 'editor'">Editor</option>
+                                </select>
+                            </div>
+                            <div class="o_documents_share_row">
+                                <div class="o_documents_share_label">Notify <span class="text-info">?</span></div>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox"
+                                           t-model="state.notify" id="documents_share_notify"/>
+                                </div>
+                            </div>
+                            <textarea class="form-control o_documents_share_message"
+                                      placeholder="Extra comments..."
+                                      rows="2"
+                                      t-model="state.message"/>
+                            <button type="button"
+                                    class="btn btn-outline-secondary o_documents_share_link_chip"
+                                    t-on-click="onCopyLink"
+                                    t-att-title="state.shareUrl">
+                                <i class="fa fa-file-o me-2"/>
+                                <span t-esc="state.documentName"/>
+                            </button>
+                        </div>
+                    </t>
+
+                    <!-- Post-share screen. The owner is always listed first,
+                         followed by every explicitly shared internal user. -->
+                    <div t-if="state.mode === 'overview'" class="o_documents_share_access_list">
+                        <h5 class="mb-3">People with access</h5>
+                        <div t-if="state.owner" class="o_documents_share_access_person">
+                            <span class="o_documents_share_avatar">
+                                <t t-esc="state.owner.name.slice(0, 1).toUpperCase()"/>
+                            </span>
+                            <span class="d-flex flex-column flex-grow-1">
+                                <span>
+                                    <strong t-esc="state.owner.name"/>
+                                    <span t-if="state.owner.is_current_user" class="o_documents_share_you_badge">You</span>
+                                </span>
+                                <small class="text-muted" t-esc="state.owner.email"/>
+                            </span>
+                            <span class="text-muted">Owner</span>
+                        </div>
+                        <div t-foreach="state.users" t-as="person" t-key="person.id"
+                             class="o_documents_share_access_person">
+                            <span class="o_documents_share_avatar o_documents_share_avatar_recipient">
+                                <t t-esc="person.name.slice(0, 1).toUpperCase()"/>
+                            </span>
+                            <span class="d-flex flex-column flex-grow-1">
+                                <strong t-esc="person.name"/>
+                                <small class="text-muted" t-esc="person.email"/>
+                            </span>
+                            <span class="text-muted">
+                                <t t-if="person.role === 'editor'">Editor</t>
+                                <t t-else="">Viewer</t>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- General Access is intentionally shown only on the
+                         overview screen. The reference flow displays None. -->
+                    <div t-if="state.mode === 'overview'" class="o_documents_share_section">
+                        <h5 class="mb-3">General Access</h5>
+                        <div class="o_documents_share_general_row">
+                            <div>
+                                <div class="fw-semibold">Internal users <span class="text-info">?</span></div>
+                                <div class="text-muted small">Only people with access can open with the link</div>
+                            </div>
+                            <span class="text-muted">None</span>
+                        </div>
+                        <div class="o_documents_share_access_link mt-3">
+                            <div>
+                                <div class="fw-semibold">Access through link <span class="text-info">?</span></div>
+                                <div class="text-muted small">No one on the internet can access</div>
+                            </div>
+                            <span class="text-muted">None</span>
+                        </div>
+                    </div>
+                </t>
+            </div>
+            <t t-set-slot="footer">
+                <t t-if="state.mode === 'invite'">
+                    <button t-if="state.selectedUsers.length" type="button"
+                            class="btn btn-primary"
+                            t-att-disabled="!canShare"
+                            t-on-click="onShare">
+                        Share
+                    </button>
+                    <button type="button" class="btn btn-secondary"
+                            t-on-click="onCopyLink">
+                        <i class="fa fa-copy me-1"/>Copy Links
+                    </button>
+                    <button type="button" class="btn btn-secondary"
+                            t-on-click="onDiscard">
+                        Discard
+                    </button>
+                </t>
+                <t t-else="">
+                    <button type="button" class="btn btn-primary" t-on-click="onDiscard">
+                        Done
+                    </button>
+                    <button type="button" class="btn btn-secondary" t-on-click="onCopyLink">
+                        <i class="fa fa-copy me-1"/>Copy Links
+                    </button>
+                </t>
+            </t>
+        </Dialog>
+    </t>t>
+            </templates>
+

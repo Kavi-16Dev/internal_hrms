@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="custom_documents.DocumentsListRenderer" t-inherit="web.ListRenderer" t-inherit-mode="primary">
+        <xpath expr="//tbody[@class='ui-sortable']/t[1]" position="before">
+            <t t-if="!props.list.isGrouped and documentFolders.length">
+                <t t-foreach="documentFolders" t-as="folder" t-key="'folder-' + folder.id">
+                    <tr class="o_data_row o_documents_folder_list_row cursor-pointer"
+                        t-att-data-folder-id="folder.id"
+                        t-on-click.stop.prevent="() => this.openDocumentFolder(folder)"
+                        t-on-keydown="(ev) => this.onFolderKeydown(folder, ev)"
+                        tabindex="0"
+                        role="button"
+                        t-att-aria-label="folder.name">
+
+
+                        <td t-if="hasSelectors"
+                            class="o_list_record_selector user-select-none"
+                            t-on-click.stop="() => {}">
+                            <CheckBox value="isFolderSelected(folder)"
+                                    onChange="() => this.toggleFolderSelection(folder)"/>
+                        </td>
+
+                        <t t-foreach="columns" t-as="column" t-key="column.id">
+                            <td t-if="column.type === 'field'"
+                                class="o_data_cell cursor-pointer"
+                                t-att-name="column.name">
+                                <t t-if="column.name === 'name'">
+                                    <div class="d-flex align-items-center min-w-0">
+                                        <i class="fa fa-folder-o o_documents_folder_list_icon me-2"
+                                           aria-hidden="true"/>
+                                        <span class="text-truncate"
+                                              t-esc="folder.name"/>
+                                    </div>
+                                </t>
+                            </td>
+                            <td t-elif="column.type === 'button_group'"
+                                class="o_data_cell w-print-0 p-print-0"/>
+                            <td t-else="" class="o_data_cell"/>
+                        </t>
+
+                        <td t-if="hasOpenFormViewColumn"
+                            class="o_list_record_open_form_view w-print-0 p-print-0"/>
+
+                        <td t-if="displayOptionalFields or activeActions.onDelete"
+                            class="w-print-0 p-print-0"/>
+                    </tr>
+                </t>
+            </t>
+        </xpath>
+    </t>
+
+</templates>

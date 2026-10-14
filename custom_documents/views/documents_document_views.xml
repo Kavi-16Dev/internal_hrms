@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="documents_document_version_view_list" model="ir.ui.view">
+        <field name="name">documents.document.version.list</field>
+        <field name="model">documents.document.version</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0">
+                <field name="name"/>
+                <field name="create_date"/>
+                <field name="create_uid"/>
+                <field name="file_size"/>
+                <button name="action_restore" type="object" string="Restore" icon="fa-undo"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="documents_document_version_view_form" model="ir.ui.view">
+        <field name="name">documents.document.version.form</field>
+        <field name="model">documents.document.version</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <sheet>
+                    <group>
+                        <field name="document_id"/>
+                        <field name="name"/>
+                        <field name="create_date"/>
+                        <field name="create_uid"/>
+                        <field name="file_size"/>
+                        <field name="attachment_id" filename="name" widget="binary" string="File"/>
+                    </group>
+                    <button name="action_restore" type="object" string="Restore This Version" class="btn-primary"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="documents_document_view_kanban" model="ir.ui.view">
+        <field name="name">documents.document.kanban</field>
+        <field name="model">documents.document</field>
+        <field name="arch" type="xml">
+            <kanban class="o_documents_kanban" sample="1" js_class="documents_kanban">
+                <field name="name"/>
+                <field name="mimetype"/>
+                <field name="state"/>
+                <field name="active"/>
+                <field name="owner_id"/>
+                <field name="tag_ids"/>
+                <field name="attachment_id"/>
+                <field name="url"/>
+                <field name="type"/>
+                <field name="create_date"/>
+                <field name="show_create_applicant"/>
+                <field name="lock_uid"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click">
+                            <span style="position:absolute;top:2px;right:4px;font-size:9px;color:#999;z-index:1;">v2.1.8</span>
+                            <div class="o_kanban_image d-flex align-items-center justify-content-center"
+                                 style="height:120px;background-color:#f5f5f5;overflow:hidden;">
+                                <img t-if="record.attachment_id.raw_value and record.mimetype.raw_value and record.mimetype.raw_value.indexOf('image') === 0"
+                                     t-att-src="'/web/image/ir.attachment/' + record.attachment_id.raw_value + '/datas'"
+                                     class="w-100 h-100" style="object-fit:cover;" alt="Preview"/>
+                                <i t-elif="record.mimetype.raw_value and record.mimetype.raw_value.indexOf('pdf') !== -1" class="fa fa-file-pdf-o fa-3x text-muted"/>
+                                <i t-elif="record.mimetype.raw_value and (record.mimetype.raw_value.indexOf('spreadsheet') !== -1 or record.mimetype.raw_value.indexOf('csv') !== -1 or record.mimetype.raw_value.indexOf('excel') !== -1)" class="fa fa-file-excel-o fa-3x text-muted"/>
+                                <i t-elif="!record.attachment_id.raw_value" class="fa fa-cube fa-3x text-muted"/>
+                                <i t-else="1" class="fa fa-file-text-o fa-3x text-muted"/>
+                            </div>
+                            <div class="p-2">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <strong class="text-truncate"><field name="name"/></strong>
+                                    <i t-if="record.lock_uid.raw_value" class="fa fa-lock text-muted ms-1" title="Locked"/>
+                                    <a t-if="record.state.raw_value === 'requested'"
+                                       type="open"
+                                       class="text-success ms-auto me-1"
+                                       title="Upload requested document"
+                                       aria-label="Upload requested document">
+                                        <i class="fa fa-upload"/>
+                                    </a>
+                                    <img t-if="record.owner_id.raw_value"
+                                         t-att-src="'/web/image/res.users/' + record.owner_id.raw_value + '/avatar_128'"
+                                         class="rounded-circle ms-1" style="width:24px;height:24px;" alt="Owner"/>
+                                </div>
+                                <div class="text-muted small">
+                                    <field name="create_date" widget="date"/>
+                                </div>
+                                <div class="mt-1">
+                                    <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                                </div>
+                                <span class="badge text-bg-warning" invisible="state != 'requested'">Requested</span>
+                                <div class="mt-1" invisible="active">
+                                    <button name="action_restore" type="object" string="Restore"
+                                            class="btn btn-sm btn-link px-0"/>
+                                    <button name="action_delete_permanently" type="object" string="Delete Permanently"
+                                            class="btn btn-sm btn-link text-danger px-0"
+                                            confirm="This document will be permanently deleted. This action cannot be undone."/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="documents_document_view_list" model="ir.ui.view">
+        <field name="name">documents.document.list</field>
+        <field name="model">documents.document</field>
+        <field name="arch" type="xml">
+            <list sample="1" js_class="documents_list">
+                <field name="active" column_invisible="1"/>
+                <field name="mimetype" column_invisible="1"/>
+                <field name="attachment_id" column_invisible="1"/>
+                <field name="url" column_invisible="1"/>
+                <field name="type" column_invisible="1"/>
+                <field name="show_create_applicant" column_invisible="1"/>
+                <field name="lock_uid" column_invisible="1"/>
+                <field name="name"/>
+                <field name="folder_id"/>
+                <field name="owner_id" optional="show"/>
+                <field name="lock_uid" string="Locked By" optional="hide"/>
+                <field name="tag_ids" widget="many2many_tags" optional="show"/>
+                <field name="state" widget="badge" decoration-warning="state == 'requested'"/>
+                <field name="file_size" optional="hide"/>
+                <field name="create_date" optional="show"/>
+                <button name="action_download" type="object" icon="fa-download" title="Download"
+                        invisible="state == 'requested' or not active"/>
+                <button name="action_share" type="object" icon="fa-share-alt" title="Share"
+                        invisible="not active"/>
+                <button name="action_create_applicant" type="object" icon="fa-user-plus"
+                        title="Create an Applicant"
+                        invisible="not show_create_applicant or not active"/>
+                <button name="action_archive" type="object" icon="fa-trash" title="Move to Trash"
+                        invisible="not active"/>
+                <button name="action_restore" type="object" icon="fa-undo" title="Restore"
+                        invisible="active"/>
+                <button name="action_delete_permanently" type="object" icon="fa-times" title="Delete Permanently"
+                        invisible="active"
+                        confirm="This document will be permanently deleted. This action cannot be undone."/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Dedicated list view for Configuration > Spreadsheet Templates,
+         matching Odoo's own Spreadsheet Templates screen: Name / Created by
+         / Created on / Spreadsheet file columns, list-only (no kanban). -->
+    <record id="documents_document_view_list_spreadsheet_templates" model="ir.ui.view">
+        <field name="name">documents.document.list.spreadsheet.templates</field>
+        <field name="model">documents.document</field>
+        <field name="arch" type="xml">
+            <list sample="1" create="false">
+                <field name="active" column_invisible="1"/>
+                <field name="name" string="Name"/>
+                <field name="owner_id" string="Created by"/>
+                <field name="create_date" string="Created on"/>
+                <field name="datas" filename="name" widget="binary" string="Spreadsheet file"/>
+                <button name="action_download" type="object" icon="fa-download" title="Download"
+                        invisible="not active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="documents_document_view_form" model="ir.ui.view">
+        <field name="name">documents.document.form</field>
+        <field name="model">documents.document</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_upload_fulfill" type="object" string="Mark Fulfilled"
+                            invisible="state != 'requested'" class="btn-primary"/>
+                    <button name="action_share" type="object" string="Share" invisible="not active"/>
+                    <button name="action_download" type="object" string="Download"
+                            invisible="not attachment_id or not active"/>
+                    <button name="action_create_applicant" type="object" string="Create an Applicant"
+                            invisible="not show_create_applicant or not active"/>
+                    <button name="action_duplicate" type="object" string="Duplicate"
+                            invisible="not active"/>
+                    <button name="action_toggle_lock" type="object" string="Lock"
+                            invisible="not active or lock_uid"/>
+                    <button name="action_toggle_lock" type="object" string="Unlock"
+                            invisible="not active or not lock_uid" class="btn-warning"/>
+                    <button name="action_archive" type="object" string="Move to Trash"
+                            invisible="not active"/>
+                    <button name="action_restore" type="object" string="Restore"
+                            invisible="active" class="btn-primary"/>
+                    <button name="action_delete_permanently" type="object" string="Delete Permanently"
+                            invisible="active" class="btn-danger"
+                            confirm="This document will be permanently deleted. This action cannot be undone."/>
+                    <field name="state" widget="statusbar" statusbar_visible="requested,uploaded"/>
+                    <field name="show_create_applicant" invisible="1"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Locked" bg_color="text-bg-warning" invisible="not lock_uid"/>
+                    <widget name="web_ribbon" title="Shortcut" bg_color="text-bg-info" invisible="not is_shortcut"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_versions" type="object" class="oe_stat_button"
+                                icon="fa-history" invisible="not version_count">
+                            <field name="version_count" widget="statinfo" string="Versions"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Document Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="folder_id"/>
+                            <field name="owner_id"/>
+                            <field name="partner_id"/>
+                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                            <field name="lock_uid" readonly="1" invisible="not lock_uid"/>
+                            <field name="shortcut_document_id" readonly="1" invisible="not is_shortcut"/>
+                        </group>
+                        <group>
+                            <field name="type"/>
+                            <field name="datas" filename="name" invisible="type != 'binary'"/>
+                            <field name="url" invisible="type != 'url'"/>
+                            <field name="file_size" invisible="not attachment_id"/>
+                            <field name="is_shortcut" invisible="1"/>
+                            <field name="version_count" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Request" invisible="state != 'requested'">
+                        <field name="requested_by_id"/>
+                        <field name="request_user_id"/>
+                        <field name="request_partner_id"/>
+                        <field name="request_deadline"/>
+                        <field name="request_note"/>
+                    </group>
+                    <group string="Related Record" invisible="not res_model">
+                        <field name="res_model" invisible="1"/>
+                        <field name="res_id" invisible="1"/>
+                        <field name="res_name"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="documents_document_view_search" model="ir.ui.view">
+        <field name="name">documents.document.search</field>
+        <field name="model">documents.document</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="folder_id"/>
+                <field name="owner_id"/>
+                <field name="tag_ids"/>
+                <filter string="My Documents" name="my_documents" domain="[('owner_id', '=', uid)]"/>
+                <filter string="My Templates" name="my_templates" domain="[('owner_id', '=', uid)]"/>
+                <filter string="Archived" name="inactive" domain="[('active','=',False)]"/>
+                <filter string="Requested" name="requested" domain="[('state', '=', 'requested')]"/>
+                <filter string="Company Drive" name="company_drive" domain="[('folder_id.folder_type', '=', 'company')]"/>
+                <filter string="Trash" name="trash" domain="[('active', '=', False)]"/>
+                <filter string="Recent" name="recent" domain="[]"/>
+                <group>
+                    <filter string="Workspace" name="group_folder" context="{'group_by': 'folder_id'}"/>
+                    <filter string="Owner" name="group_owner" context="{'group_by': 'owner_id'}"/>
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                </group>
+                <!-- Persistent left sidebar: click a workspace to drill into it,
+                     exactly like the folder tree on the left of Odoo's Documents app. -->
+                <searchpanel>
+                    <field name="folder_id" string="Workspaces" icon="fa-folder-o"
+                           enable_counters="1" hierarchize="1"/>
+                    <field name="tag_ids" string="Tags" icon="fa-tags"
+                           select="multi" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="documents_document_action" model="ir.actions.act_window">
+        <field name="name">Documents</field>
+        <field name="res_model">documents.document</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_my_documents': 0, 'documents_sidebar_category': 'all'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Upload a document, or request one from a colleague or contact.
+            </p>
+        </field>
+    </record>
+
+    <record id="documents_document_action_my_drive" model="ir.actions.act_window">
+        <field name="name">My Drive</field>
+        <field name="res_model">documents.document</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('folder_id.folder_type', '=', 'employee'), ('folder_id.user_id', '=', uid)]</field>
+        <field name="context">{'documents_sidebar_category': 'my_drive'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Your personal space
+            </p>
+        </field>
+    </record>
+
+    <record id="documents_document_action_company_drive" model="ir.actions.act_window">
+        <field name="name">Company</field>
+        <field name="res_model">documents.document</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('folder_id.folder_type', '=', 'company')]</field>
+        <field name="context">{'default_folder_is_company_drive': 1, 'documents_sidebar_category': 'company'}</field>
+    </record>
+
+    <record id="documents_document_action_shared_with_me" model="ir.actions.act_window">
+        <field name="name">Shared with me</field>
+        <field name="res_model">documents.document</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[
+            ('active', '=', True),
+            ('state', '=', 'uploaded'),
+            '|',
+                ('shared_user_ids', 'in', uid),
+                ('folder_id.member_ids', 'in', uid)
+        ]</field>
+        <field name="context">{'documents_sidebar_category': 'shared_with_me'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Documents explicitly shared with you will show up here.
+            </p>
+        </field>
+    </record>
+
+    <record id="documents_document_action_requests" model="ir.actions.act_window">
+        <field name="name">Requests</field>
+        <field name="res_model">documents.document</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[
+            ('active', '=', True),
+            ('state', '=', 'requested'),
+            '|', '|',
+                ('request_user_id', '=', uid),
+                ('request_partner_id.user_ids', 'in', [uid]),
+                ('requested_by_id', '=', uid)
+        ]</field>
+        <field name="context">{'documents_sidebar_category': 'requests'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Requested documents waiting for action will show up here.
+            </p>
+        </field>
+    </record>
+
+    <record id="documents_document_action_inbox" model="ir.actions.act_window">
+        <field name="name">Inbox</field>
+        <field name="res_model">documents.document</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[
+            ('active', '=', True),
+            ('state', '=', 'uploaded'),
+            ('folder_id.is_inbox', '=', True),
+            '|',
+                ('owner_id', '=', uid),
+                ('shared_user_ids', 'not in', [uid])
+        ]</field>
+        <field name="context">{'documents_sidebar_category': 'inbox'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Documents received in the company Inbox will show up here.
+            </p>
+        </field>
+    </record>
+
+    <record id="documents_document_action_recent" model="ir.actions.act_window">
+        <field name="name">Recent</field>
+        <field name="res_model">documents.document</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_recent': 1, 'documents_sidebar_category': 'recent'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Documents you've recently viewed or edited will show up here.
+            </p>
+        </field>
+    </record>
+
+    <record id="documents_document_action_trash" model="ir.actions.act_window">
+        <field name="name">Trash</field>
+        <field name="res_model">documents.document</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('active', '=', False)]</field>
+        <field name="context">{'active_test': False, 'documents_sidebar_category': 'trash'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Documents moved to trash will show up here
+            </p>
+        </field>
+    </record>
+
+    <record id="documents_document_action_spreadsheet_templates" model="ir.actions.act_window">
+        <field name="name">Spreadsheet Templates</field>
+        <field name="res_model">documents.document</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="documents_document_view_list_spreadsheet_templates"/>
+        <field name="domain">[('mimetype', 'in', [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.oasis.opendocument.spreadsheet',
+            'application/vnd.ms-excel',
+            'text/csv'])]</field>
+        <field name="context">{'default_folder_is_company_drive': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Upload a spreadsheet (.xlsx, .ods, .csv) to keep it here as a reusable template.
+            </p>
+        </field>
+    </record>
+
+</odoo>

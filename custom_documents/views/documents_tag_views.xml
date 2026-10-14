@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="documents_tag_category_view_list" model="ir.ui.view">
+        <field name="name">documents.tag.category.list</field>
+        <field name="model">documents.tag.category</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="folder_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="documents_tag_category_action" model="ir.actions.act_window">
+        <field name="name">Tag Categories</field>
+        <field name="res_model">documents.tag.category</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="documents_tag_view_list" model="ir.ui.view">
+        <field name="name">documents.tag.list</field>
+        <field name="model">documents.tag</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="category_id"/>
+                <field name="color" widget="color_picker"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="documents_tag_action" model="ir.actions.act_window">
+        <field name="name">Tags</field>
+        <field name="res_model">documents.tag</field>
+        <field name="view_mode">list</field>
+    </record>
+
+</odoo>

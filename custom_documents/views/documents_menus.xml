@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ==================== App icon / root ==================== -->
+    <menuitem id="menu_documents_root" name="Documents" sequence="70"
+              web_icon="custom_documents,static/description/icon.png"
+              groups="base.group_user"/>
+
+    <!-- ==================== Tab: Documents ==================== -->
+    <!-- A single, non-dropdown "Documents" tab - it opens straight into
+         the All view. The All / Company / My Drive / Shared with me /
+         Recent / Trash items that used to live here as a submenu now
+         live as a persistent left sidebar INSIDE that page (see
+         DocumentsSearchPanel / documents_search_panel.js|xml), exactly
+         like the reference screenshot. The underlying actions
+         (documents_document_action_company_drive, _my_drive,
+         _shared_with_me, _recent, _trash) still exist and are what the
+         sidebar links to - they're just no longer exposed as menu items. -->
+    <menuitem id="menu_documents_all" name="Documents" parent="menu_documents_root"
+              action="documents_document_action" sequence="10"/>
+
+    <!-- "Request Document" and "Share Links" are intentionally NOT exposed
+         as their own sidebar entries (they aren't in the reference UI).
+         They stay fully available as: the "Request" option under the New
+         button (documents_request_wizard_action, see documents_new_menu.js)
+         and the "Share" button on a document (documents_share_action, see
+         action_share on documents.document) - both create/open records
+         that land back in this same All/Company/My Drive/... view. -->
+
+
+    <!-- ==================== Tab: Configuration ==================== -->
+    <menuitem id="menu_documents_config" name="Configuration" parent="menu_documents_root"
+              sequence="90" groups="group_documents_manager"/>
+
+    <menuitem id="menu_documents_settings" name="Settings" parent="menu_documents_config"
+              action="documents_config_settings_action" sequence="10"/>
+
+    <menuitem id="menu_documents_spreadsheet_templates" name="Spreadsheet Templates"
+              parent="menu_documents_config"
+              action="documents_document_action_spreadsheet_templates" sequence="20"/>
+
+    <!-- Structure (section header, no action, like the reference screenshot) -->
+    <menuitem id="menu_documents_structure" name="Structure" parent="menu_documents_config"
+              sequence="30"/>
+
+    <menuitem id="menu_documents_tags" name="Tags" parent="menu_documents_structure"
+              action="documents_tag_action" sequence="10"/>
+
+    <!-- Activities (section header, no action) -->
+    <menuitem id="menu_documents_activities" name="Activities" parent="menu_documents_config"
+              sequence="40"/>
+
+    <menuitem id="menu_documents_activity_types" name="Activity Types" parent="menu_documents_activities"
+              action="mail.mail_activity_type_action" sequence="10"/>
+
+    <menuitem id="menu_documents_activity_plans" name="Activity Plans" parent="menu_documents_activities"
+              action="mail.mail_activity_plan_action" sequence="20"/>
+
+</odoo>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="custom_documents.NewButtonDropdown">
+        <div class="o_documents_new_dropdown">
+            <Dropdown>
+                <button type="button" class="btn btn-primary dropdown-toggle o_documents_new_button"
+                        accesskey="c" data-bounce-button="" t-att-disabled="documentsNew.state.isUploading">
+                    New
+                </button>
+                <t t-set-slot="content">
+                    <DropdownItem onSelected="() => documentsNew.openUpload()">
+                        <i class="fa fa-fw fa-upload me-2"/>Upload
+                    </DropdownItem>
+                    <DropdownItem onSelected="() => documentsNew.openRequestWizard()">
+                        <i class="fa fa-fw fa-paper-plane-o me-2"/>Request
+                    </DropdownItem>
+                    <DropdownItem onSelected="() => documentsNew.openLinkDialog()">
+                        <i class="fa fa-fw fa-link me-2"/>Link
+                    </DropdownItem>
+                    <DropdownItem onSelected="() => documentsNew.openSpreadsheet()">
+                        <i class="fa fa-fw fa-table me-2"/>Spreadsheet
+                    </DropdownItem>
+                    <div role="separator" class="dropdown-divider"/>
+                    <DropdownItem onSelected="() => documentsNew.openNewFolderDialog()">
+                        <i class="fa fa-fw fa-folder-o me-2"/>Folder
+                    </DropdownItem>
+                </t>
+            </Dropdown>
+            <input type="file" class="d-none" multiple="multiple"
+                   t-ref="documentsNewFileInput"
+                   t-att-accept="documentsNew.state.acceptedExtensions"
+                   t-on-change="(ev) => documentsNew.onFileInputChange(ev)"/>
+        </div>
+    </t>
+
+</templates>
