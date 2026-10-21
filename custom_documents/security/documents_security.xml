@@ -125,6 +125,31 @@
             <field name="groups" eval="[(4, ref('base.group_user'))]"/>
         </record>
 
+        <!-- General access ("Internal users" dropdown of the Share dialog).
+             Group rules on the same operation are OR-ed, so these only
+             widen access for documents whose owner opened them up. -->
+        <record id="rule_document_general_access_read" model="ir.rule">
+            <field name="name">Documents General Access: internal users can read</field>
+            <field name="model_id" ref="model_documents_document"/>
+            <field name="domain_force">[('access_internal', 'in', ['viewer', 'editor'])]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_document_general_access_write" model="ir.rule">
+            <field name="name">Documents General Access: internal editors can edit</field>
+            <field name="model_id" ref="model_documents_document"/>
+            <field name="domain_force">[('access_internal', '=', 'editor')]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="False"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
         <record id="rule_document_version_internal_basic" model="ir.rule">
             <field name="name">Documents Basic Access Rights: document versions</field>
             <field name="model_id" ref="model_documents_document_version"/>

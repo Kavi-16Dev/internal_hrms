@@ -103,6 +103,25 @@ class DocumentsDocument(models.Model):
         'document_id', 'user_id', string='Shared With', copy=False,
         help='Internal users who have explicit access to this document.')
 
+    # General access (Share dialog > "General Access").  Both default to
+    # "none": a document is only reachable by its owner, explicit recipients
+    # and whoever the workspace rules already allow.
+    access_internal = fields.Selection([
+        ('none', 'None'),
+        ('viewer', 'Viewer'),
+        ('editor', 'Editor'),
+    ], string='Internal Users Access', default='none', required=True,
+        copy=False, tracking=True,
+        help='Access granted to every internal user, without an explicit share.')
+    access_via_link = fields.Selection([
+        ('none', 'None'),
+        ('viewer', 'Viewer'),
+        ('editor', 'Editor'),
+    ], string='Access Through Link', default='none', required=True,
+        copy=False, tracking=True,
+        help='Whether anyone holding the document link may open it. '
+             '"Editor" additionally allows downloading the file.')
+
     # -- Lock -------------------------------------------------
     # Mirrors Enterprise's "Lock" action: while locked, only the person who
     # locked it (or a Documents Manager) may unlock it. We don't use this
@@ -500,27 +519,41 @@ class DocumentsDocument(models.Model):
         browser profile, or an incognito window.
         """
         self.ensure_one()
-        share = self.env['documents.share'].sudo().search([
+        share = self._get_or_create_link_share()
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        return f'{base_url.rstrip("/")}/document/share/{share.access_token}'
+
+    def _get_or_create_link_share(self):
+        """Return the tokenized share behind "Copy Link".
+
+        The token is stable per document, but whether it actually opens the
+        file is decided by ``access_via_link`` (see the portal controller),
+        so switching "Access through link" back to None really closes it.
+        """
+        self.ensure_one()
+        Share = self.env['documents.share'].sudo()
+        share = Share.search([
             ('state', '=', 'active'),
             ('share_type', '=', 'ids'),
             ('document_ids', '=', self.id),
-            ('access_mode', '=', 'view'),
+            ('is_document_link', '=', True),
         ], order='create_date desc, id desc', limit=1)
         if not share:
-            share = self.env['documents.share'].sudo().create({
+            share = Share.create({
                 'name': _('Share: %s', self.name),
                 'share_type': 'ids',
                 'document_ids': [(6, 0, [self.id])],
                 'recipient_user_ids': [(5, 0, 0)],
-                'access_mode': 'view',
+                'access_mode': 'download' if self.access_via_link == 'editor' else 'view',
                 'role': 'viewer',
                 'internal_access': 'none',
+                'is_document_link': True,
+                'date_deadline': False,
                 'owner_id': self.env.user.id,
                 'company_id': self.company_id.id or self.env.company.id,
                 'state': 'active',
             })
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        return f'{base_url.rstrip("/")}/document/share/{share.access_token}'
+        return share
 
     def action_split_pdf(self, page_ranges):
         """'Split PDF' Actions-menu entry: cut this PDF into several new
@@ -720,9 +753,12 @@ class DocumentsDocument(models.Model):
         return [
             ('active', '=', True),
             ('state', '=', 'uploaded'),
-            '|',
+            '|', '|',
                 ('shared_user_ids', 'in', uid),
                 ('folder_id.member_ids', 'in', uid),
+                '&',
+                    ('access_internal', 'in', ['viewer', 'editor']),
+                    ('owner_id', '!=', uid),
         ]
 
     @api.model

@@ -52,6 +52,11 @@ class DocumentsShare(models.Model):
         ('editor', 'Internal Users — Editor'),
     ], default='none', required=True)
 
+    is_document_link = fields.Boolean(
+        string='Document Link', default=False, copy=False,
+        help='The "Copy Link" share of a document. It only opens the file '
+             'while the document\'s "Access through link" is not None.')
+
     partner_id = fields.Many2one('res.partner', string='Shared With')
     email = fields.Char(string="Recipient's Email")
     date_deadline = fields.Date(
@@ -109,7 +114,13 @@ class DocumentsShare(models.Model):
         if self.share_type == 'folder' and self.folder_id:
             return self.env['documents.document'].sudo().search(
                 [('folder_id', 'child_of', self.folder_id.id)])
-        return self.document_ids
+        documents = self.document_ids
+        if self.is_document_link:
+            # General access: closing "Access through link" must close the
+            # link even though the token itself is still active.
+            documents = documents.sudo().filtered(
+                lambda doc: doc.access_via_link in ('viewer', 'editor'))
+        return documents
 
     @api.model
     def _sync_shared_user_index(self, documents):
@@ -274,8 +285,11 @@ class DocumentsShare(models.Model):
                 'role': (shares.filtered(
                     lambda share: user in share.recipient_user_ids)[:1].role or 'viewer'),
             } for user in users],
-            # The reference video shows both general-access choices as None.
-            'general_access': 'none',
+            'general_access': {
+                'internal': document.access_internal,
+                'link': document.access_via_link,
+            },
+            'can_manage_access': self._can_manage_general_access(document),
             'share_url': document.action_copy_link(),
         }
 
@@ -293,8 +307,68 @@ class DocumentsShare(models.Model):
         } for user in users]
 
     @api.model
+    def search_share_groups(self, search=''):
+        """Search user groups for the Share dialog's "Add Groups" picker."""
+        domain = []
+        if search:
+            domain.append(('name', 'ilike', search))
+        groups = self.env['res.groups'].sudo().search(domain, limit=12, order='name')
+        Users = self.env['res.users'].sudo()
+        result = []
+        for group in groups:
+            count = Users.search_count([
+                ('share', '=', False), ('active', '=', True),
+                ('group_ids', 'in', group.ids),
+            ])
+            if count:
+                result.append({
+                    'id': group.id,
+                    'name': group.display_name,
+                    'user_count': count,
+                })
+        return result
+
+    @api.model
+    def _can_manage_general_access(self, document):
+        return bool(
+            document.owner_id == self.env.user
+            or self.env.user.has_group('custom_documents.group_documents_manager'))
+
+    @api.model
+    def set_general_access(self, document_id, internal=None, link=None):
+        """Persist the Share dialog's "General Access" dropdowns."""
+        document = self.env['documents.document'].browse(document_id).exists()
+        if not document:
+            raise UserError(_('The document no longer exists.'))
+        document.check_access_rights('read')
+        document.check_access_rule('read')
+        if not self._can_manage_general_access(document):
+            raise AccessError(_(
+                'Only the owner of a document can change its general access.'))
+
+        allowed = ('none', 'viewer', 'editor')
+        vals = {}
+        if internal is not None:
+            if internal not in allowed:
+                raise UserError(_('Invalid access level.'))
+            vals['access_internal'] = internal
+        if link is not None:
+            if link not in allowed:
+                raise UserError(_('Invalid access level.'))
+            vals['access_via_link'] = link
+        if vals:
+            document.sudo().write(vals)
+            if 'access_via_link' in vals:
+                link_share = document._get_or_create_link_share()
+                link_share.write({
+                    'access_mode': 'download' if vals['access_via_link'] == 'editor' else 'view',
+                })
+        return self.get_share_dialog_data(document.id)
+
+    @api.model
     def action_share_internal(self, document_id, user_ids=None, role='viewer',
-                              notify=True, message=False, internal_access='none'):
+                              notify=True, message=False, internal_access='none',
+                              group_ids=None):
         """Grant internal access without overwriting existing recipients.
 
         Each recipient gets its own active share record.  This mirrors the
@@ -311,6 +385,15 @@ class DocumentsShare(models.Model):
 
         user_ids = [int(uid) for uid in (user_ids or []) if uid]
         users = self.env['res.users'].browse(user_ids).exists()
+        group_ids = [int(gid) for gid in (group_ids or []) if gid]
+        if group_ids:
+            # Groups are expanded to their current internal members: every
+            # member gets an individual share, like a manually added person.
+            users |= self.env['res.users'].sudo().search([
+                ('share', '=', False), ('active', '=', True),
+                ('group_ids', 'in', group_ids),
+            ])
+            users -= self.env.user
         if not users:
             raise UserError(_('Please select at least one person.'))
         if any(user.share for user in users):

@@ -9,7 +9,7 @@ import { _t } from "@web/core/l10n/translation";
  * Share dialog matching the Odoo Documents flow shown in the reference video:
  *
  *   Share: <document>
- *   - add internal people / email addresses
+ *   - Add People / Add Groups
  *   - role (Viewer / Editor)
  *   - Notify toggle
  *   - optional message
@@ -41,14 +41,18 @@ export class DocumentsShareDialog extends Component {
             users: [],
             owner: null,
             selectedUsers: [],
-            mode: "invite",
+            selectedGroups: [],
+            // "people" | "groups": the Add People / Add Groups radio.
+            target: "people",
+            canManageAccess: true,
+            generalInternal: "none",
+            generalLink: "none",
             search: "",
             suggestions: [],
             showSuggestions: false,
             role: "viewer",
             notify: true,
             message: "",
-            internalAccess: "none",
         });
 
         onWillStart(async () => {
@@ -60,8 +64,28 @@ export class DocumentsShareDialog extends Component {
         return _t("Share: %s", this.state.documentName || "Document");
     }
 
+    get hasSelection() {
+        return this.state.selectedUsers.length + this.state.selectedGroups.length > 0;
+    }
+
     get canShare() {
-        return !this.state.saving && this.state.selectedUsers.length > 0;
+        return !this.state.saving && this.hasSelection;
+    }
+
+    get internalHint() {
+        return {
+            none: _t("Only people with access can open with the link"),
+            viewer: _t("Can only view. Cannot rename, move, or delete."),
+            editor: _t("Can view and edit. Cannot delete."),
+        }[this.state.generalInternal];
+    }
+
+    get linkHint() {
+        return {
+            none: _t("No one on the internet can access"),
+            viewer: _t("Anyone on the internet with the link can view"),
+            editor: _t("Anyone on the internet with the link can view and download"),
+        }[this.state.generalLink];
     }
 
     get selectedIds() {
@@ -70,16 +94,6 @@ export class DocumentsShareDialog extends Component {
 
     get roleLabel() {
         return this.state.role === "editor" ? _t("Editor") : _t("Viewer");
-    }
-
-    get generalAccessLabel() {
-        if (this.state.internalAccess === "editor") {
-            return _t("Internal Users — Editor");
-        }
-        if (this.state.internalAccess === "viewer") {
-            return _t("Internal Users — Viewer");
-        }
-        return _t("None");
     }
 
     async load() {
@@ -94,31 +108,48 @@ export class DocumentsShareDialog extends Component {
             this.state.users = data.users || [];
             this.state.owner = data.owner || null;
             this.state.selectedUsers = [];
-            // Always open in invite mode so an already-shared document can
-            // receive another recipient without first entering the summary screen.
-            this.state.mode = "invite";
-            this.state.internalAccess = data.general_access || "none";
+            this.state.selectedGroups = [];
+            this.applyGeneralAccess(data);
         } finally {
             this.state.loading = false;
         }
     }
 
+    applyGeneralAccess(data) {
+        const access = data.general_access || {};
+        this.state.generalInternal = access.internal || "none";
+        this.state.generalLink = access.link || "none";
+        this.state.canManageAccess = data.can_manage_access !== false;
+    }
+
+    onTargetChange(target) {
+        this.state.target = target;
+        this.state.search = "";
+        this.state.suggestions = [];
+        this.state.showSuggestions = false;
+    }
+
     async onSearchInput(ev) {
         this.state.search = ev.target.value;
         this.state.showSuggestions = true;
-        if (!this.state.search.trim()) {
+        const method =
+            this.state.target === "groups" ? "search_share_groups" : "search_share_users";
+        // Groups are listed as soon as the field is focused; people only
+        // once something has been typed.
+        if (!this.state.search.trim() && this.state.target !== "groups") {
             this.state.suggestions = [];
             return;
         }
-        this.state.suggestions = await this.orm.call(
-            "documents.share",
-            "search_share_users",
-            [this.state.search.trim()]
-        );
+        this.state.suggestions = await this.orm.call("documents.share", method, [
+            this.state.search.trim(),
+        ]);
     }
 
-    onFocusSearch() {
+    async onFocusSearch(ev) {
         this.state.showSuggestions = true;
+        if (this.state.target === "groups" && !this.state.suggestions.length) {
+            await this.onSearchInput(ev);
+        }
     }
 
     onBlurSearch() {
@@ -128,13 +159,14 @@ export class DocumentsShareDialog extends Component {
         }, 150);
     }
 
-    isSelected(userId) {
-        return this.state.selectedUsers.some((user) => user.id === userId);
+    get selectionKey() {
+        return this.state.target === "groups" ? "selectedGroups" : "selectedUsers";
     }
 
-    addUser(user) {
-        if (!this.isSelected(user.id)) {
-            this.state.selectedUsers.push(user);
+    addSuggestion(item) {
+        const list = this.state[this.selectionKey];
+        if (!list.some((entry) => entry.id === item.id)) {
+            list.push(item);
         }
         this.state.search = "";
         this.state.suggestions = [];
@@ -147,20 +179,46 @@ export class DocumentsShareDialog extends Component {
         );
     }
 
-    onRoleChange(ev) {
-        this.state.role = ev.target.value;
-        if (this.state.internalAccess !== "none") {
-            this.state.internalAccess = this.state.role;
+    removeGroup(groupId) {
+        this.state.selectedGroups = this.state.selectedGroups.filter(
+            (group) => group.id !== groupId
+        );
+    }
+
+    /**
+     * General Access dropdowns are saved immediately, like the Enterprise
+     * dialog: there is no extra "apply" step.
+     */
+    async onGeneralAccessChange(kind, ev) {
+        const value = ev.target.value;
+        const previous = kind === "internal" ? this.state.generalInternal : this.state.generalLink;
+        if (kind === "internal") {
+            this.state.generalInternal = value;
+        } else {
+            this.state.generalLink = value;
+        }
+        try {
+            const data = await this.orm.call("documents.share", "set_general_access", [
+                this.props.documentId,
+                kind === "internal" ? value : null,
+                kind === "link" ? value : null,
+            ]);
+            this.applyGeneralAccess(data);
+            if (this.props.onShared) {
+                await this.props.onShared(data);
+            }
+        } catch (error) {
+            if (kind === "internal") {
+                this.state.generalInternal = previous;
+            } else {
+                this.state.generalLink = previous;
+            }
+            throw error;
         }
     }
 
-    onGeneralAccessChange(ev) {
-        this.state.internalAccess = ev.target.value;
-        if (ev.target.value === "editor") {
-            this.state.role = "editor";
-        } else if (ev.target.value === "viewer") {
-            this.state.role = "viewer";
-        }
+    onRoleChange(ev) {
+        this.state.role = ev.target.value;
     }
 
     async onCopyLink() {
@@ -200,16 +258,19 @@ export class DocumentsShareDialog extends Component {
                     this.state.role,
                     this.state.notify,
                     this.state.message || false,
-                    this.state.internalAccess,
+                    "none",
+                    this.state.selectedGroups.map((group) => group.id),
                 ]
             );
             this.state.shareUrl = result.share_url || this.state.shareUrl;
             this.state.users = result.users || this.state.users;
             this.state.owner = result.owner || this.state.owner;
             this.state.selectedUsers = [];
+            this.state.selectedGroups = [];
+            this.state.message = "";
             this.state.search = "";
             this.state.suggestions = [];
-            this.state.mode = "overview";
+            this.applyGeneralAccess(result);
             this.notification.add(
                 _t("Successfully Shared. Member added."),
                 { type: "success" }

@@ -314,9 +314,12 @@
         <field name="domain">[
             ('active', '=', True),
             ('state', '=', 'uploaded'),
-            '|',
+            '|', '|',
                 ('shared_user_ids', 'in', uid),
-                ('folder_id.member_ids', 'in', uid)
+                ('folder_id.member_ids', 'in', uid),
+                '&amp;',
+                    ('access_internal', 'in', ['viewer', 'editor']),
+                    ('owner_id', '!=', uid)
         ]</field>
         <field name="context">{'documents_sidebar_category': 'shared_with_me'}</field>
         <field name="help" type="html">

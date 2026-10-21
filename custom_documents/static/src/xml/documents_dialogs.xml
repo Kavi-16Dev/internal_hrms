@@ -185,98 +185,113 @@
                     </div>
                 </t>
                 <t t-else="">
-                    <!-- Invite screen: before selecting a person, only the
-                         people/email input is shown, matching the reference. -->
-                    <t t-if="state.mode === 'invite' and !state.selectedUsers.length">
-                        <div class="o_documents_share_people_picker">
-                            <div class="o_documents_share_people_icon">
-                                <i class="fa fa-user-plus"/>
-                            </div>
-                            <div class="o_documents_share_people_field">
-                                <input type="text"
-                                       class="o_documents_share_people_input"
-                                       placeholder="Add people or email addresses"
-                                       t-model="state.search"
-                                       t-on-input="onSearchInput"
-                                       t-on-focus="onFocusSearch"
-                                       t-on-blur="onBlurSearch"
-                                       autocomplete="off"/>
-                                <div t-if="state.showSuggestions and state.suggestions.length"
-                                     class="o_documents_share_suggestions">
-                                    <t t-foreach="state.suggestions" t-as="person" t-key="person.id">
-                                        <button type="button"
-                                                class="o_documents_share_suggestion"
-                                                t-on-mousedown="() => this.addUser(person)">
-                                            <span class="o_documents_share_avatar">
-                                                <t t-esc="person.name.slice(0, 1).toUpperCase()"/>
-                                            </span>
-                                            <span class="d-flex flex-column text-start">
-                                                <strong t-esc="person.name"/>
-                                                <small class="text-muted" t-esc="person.email"/>
-                                            </span>
-                                        </button>
-                                    </t>
-                                </div>
-                            </div>
+                    <!-- Add People / Add Groups -->
+                    <div class="o_documents_share_target d-flex gap-4 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" id="documents_share_target_people"
+                                   name="documents_share_target"
+                                   t-att-checked="state.target === 'people'"
+                                   t-on-change="() => this.onTargetChange('people')"/>
+                            <label class="form-check-label" for="documents_share_target_people">Add People</label>
                         </div>
-                    </t>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" id="documents_share_target_groups"
+                                   name="documents_share_target"
+                                   t-att-checked="state.target === 'groups'"
+                                   t-on-change="() => this.onTargetChange('groups')"/>
+                            <label class="form-check-label" for="documents_share_target_groups">Add Groups</label>
+                        </div>
+                    </div>
 
-                    <!-- Invite screen after a person has been selected.  The
-                         search input is replaced by the selected chip, just as
-                         in the reference video. -->
-                    <t t-if="state.mode === 'invite' and state.selectedUsers.length">
-                        <div class="o_documents_share_selected_header">
-                            <div class="o_documents_share_people_icon">
-                                <i class="fa fa-user-plus"/>
+                    <div class="o_documents_share_people_picker">
+                        <div class="o_documents_share_people_icon">
+                            <i class="fa fa-user-plus"/>
+                        </div>
+                        <div class="o_documents_share_people_field">
+                            <div t-if="hasSelection" class="o_documents_share_chips">
+                                <span t-foreach="state.selectedUsers" t-as="person" t-key="'u' + person.id"
+                                      class="o_documents_share_chip">
+                                    <span t-esc="person.name"/>
+                                    <button type="button" class="btn btn-link p-0 ms-1"
+                                            t-on-click="() => this.removeUser(person.id)"
+                                            aria-label="Remove">
+                                        <i class="fa fa-times"/>
+                                    </button>
+                                </span>
+                                <span t-foreach="state.selectedGroups" t-as="group" t-key="'g' + group.id"
+                                      class="o_documents_share_chip">
+                                    <i class="fa fa-users me-1"/>
+                                    <span t-esc="group.name"/>
+                                    <button type="button" class="btn btn-link p-0 ms-1"
+                                            t-on-click="() => this.removeGroup(group.id)"
+                                            aria-label="Remove">
+                                        <i class="fa fa-times"/>
+                                    </button>
+                                </span>
                             </div>
-                            <div class="o_documents_share_chips">
-                                <t t-foreach="state.selectedUsers" t-as="person" t-key="person.id">
-                                    <span class="o_documents_share_chip">
-                                        <span t-esc="person.name"/>
-                                        <button type="button"
-                                                class="btn btn-link p-0 ms-1"
-                                                t-on-click="() => this.removeUser(person.id)"
-                                                aria-label="Remove">
-                                            <i class="fa fa-times"/>
-                                        </button>
-                                    </span>
+                            <input type="text"
+                                   class="o_documents_share_people_input"
+                                   t-att-placeholder="state.target === 'groups' ? 'Add groups' : 'Add people or email addresses'"
+                                   t-model="state.search"
+                                   t-on-input="onSearchInput"
+                                   t-on-focus="onFocusSearch"
+                                   t-on-blur="onBlurSearch"
+                                   autocomplete="off"/>
+                            <div t-if="state.showSuggestions and state.suggestions.length"
+                                 class="o_documents_share_suggestions">
+                                <t t-foreach="state.suggestions" t-as="item" t-key="item.id">
+                                    <button type="button"
+                                            class="o_documents_share_suggestion"
+                                            t-on-mousedown="() => this.addSuggestion(item)">
+                                        <span class="o_documents_share_avatar">
+                                            <i t-if="state.target === 'groups'" class="fa fa-users"/>
+                                            <t t-else="" t-esc="item.name.slice(0, 1).toUpperCase()"/>
+                                        </span>
+                                        <span class="d-flex flex-column text-start">
+                                            <strong t-esc="item.name"/>
+                                            <small t-if="state.target === 'groups'" class="text-muted">
+                                                <t t-esc="item.user_count"/> internal user(s)
+                                            </small>
+                                            <small t-else="" class="text-muted" t-esc="item.email"/>
+                                        </span>
+                                    </button>
                                 </t>
                             </div>
                         </div>
-                        <div class="o_documents_share_controls">
-                            <div class="o_documents_share_row">
-                                <div class="o_documents_share_label">Role <span class="text-info">?</span></div>
-                                <select class="form-select form-select-sm o_documents_share_select"
-                                        t-on-change="onRoleChange">
-                                    <option value="viewer" t-att-selected="state.role === 'viewer'">Viewer</option>
-                                    <option value="editor" t-att-selected="state.role === 'editor'">Editor</option>
-                                </select>
-                            </div>
-                            <div class="o_documents_share_row">
-                                <div class="o_documents_share_label">Notify <span class="text-info">?</span></div>
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox"
-                                           t-model="state.notify" id="documents_share_notify"/>
-                                </div>
-                            </div>
-                            <textarea class="form-control o_documents_share_message"
-                                      placeholder="Extra comments..."
-                                      rows="2"
-                                      t-model="state.message"/>
-                            <button type="button"
-                                    class="btn btn-outline-secondary o_documents_share_link_chip"
-                                    t-on-click="onCopyLink"
-                                    t-att-title="state.shareUrl">
-                                <i class="fa fa-file-o me-2"/>
-                                <span t-esc="state.documentName"/>
-                            </button>
-                        </div>
-                    </t>
+                    </div>
 
-                    <!-- Post-share screen. The owner is always listed first,
-                         followed by every explicitly shared internal user. -->
-                    <div t-if="state.mode === 'overview'" class="o_documents_share_access_list">
-                        <h5 class="mb-3">People with access</h5>
+                    <!-- Role / notify / message: only once somebody is selected. -->
+                    <div t-if="hasSelection" class="o_documents_share_controls">
+                        <div class="o_documents_share_row">
+                            <div class="o_documents_share_label">Role <span class="text-info">?</span></div>
+                            <select class="form-select form-select-sm o_documents_share_select"
+                                    t-on-change="onRoleChange">
+                                <option value="viewer" t-att-selected="state.role === 'viewer'">Viewer</option>
+                                <option value="editor" t-att-selected="state.role === 'editor'">Editor</option>
+                            </select>
+                        </div>
+                        <div class="o_documents_share_row">
+                            <div class="o_documents_share_label">Notify <span class="text-info">?</span></div>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox"
+                                       t-model="state.notify" id="documents_share_notify"/>
+                            </div>
+                        </div>
+                        <textarea class="form-control o_documents_share_message"
+                                  placeholder="Extra comments..."
+                                  rows="2"
+                                  t-model="state.message"/>
+                        <button type="button"
+                                class="btn btn-outline-secondary o_documents_share_link_chip"
+                                t-on-click="onCopyLink"
+                                t-att-title="state.shareUrl">
+                            <i class="fa fa-file-o me-2"/>
+                            <span t-esc="state.documentName"/>
+                        </button>
+                    </div>
+
+                    <!-- People with access (owner first). -->
+                    <div t-if="!hasSelection" class="o_documents_share_access_list">
                         <div t-if="state.owner" class="o_documents_share_access_person">
                             <span class="o_documents_share_avatar">
                                 <t t-esc="state.owner.name.slice(0, 1).toUpperCase()"/>
@@ -306,41 +321,49 @@
                         </div>
                     </div>
 
-                    <!-- General Access is intentionally shown only on the
-                         overview screen. The reference flow displays None. -->
-                    <div t-if="state.mode === 'overview'" class="o_documents_share_section">
+                    <!-- General Access: always visible, saved on change. -->
+                    <div t-if="!hasSelection" class="o_documents_share_section">
                         <h5 class="mb-3">General Access</h5>
                         <div class="o_documents_share_general_row">
                             <div>
-                                <div class="fw-semibold">Internal users <span class="text-info">?</span></div>
-                                <div class="text-muted small">Only people with access can open with the link</div>
+                                <div class="fw-semibold">Internal users <span class="text-info" title="Access for every internal user of the database">?</span></div>
+                                <div class="text-muted small" t-esc="internalHint"/>
                             </div>
-                            <span class="text-muted">None</span>
+                            <select class="form-select form-select-sm o_documents_share_select"
+                                    t-att-disabled="!state.canManageAccess"
+                                    t-on-change="(ev) => this.onGeneralAccessChange('internal', ev)">
+                                <option value="viewer" t-att-selected="state.generalInternal === 'viewer'">Viewer</option>
+                                <option value="editor" t-att-selected="state.generalInternal === 'editor'">Editor</option>
+                                <option value="none" t-att-selected="state.generalInternal === 'none'">None</option>
+                            </select>
                         </div>
                         <div class="o_documents_share_access_link mt-3">
                             <div>
-                                <div class="fw-semibold">Access through link <span class="text-info">?</span></div>
-                                <div class="text-muted small">No one on the internet can access</div>
+                                <div class="fw-semibold">Access through link <span class="text-info" title="Whether anyone holding the link can open the document">?</span></div>
+                                <div class="text-muted small" t-esc="linkHint"/>
                             </div>
-                            <span class="text-muted">None</span>
+                            <select class="form-select form-select-sm o_documents_share_select"
+                                    t-att-disabled="!state.canManageAccess"
+                                    t-on-change="(ev) => this.onGeneralAccessChange('link', ev)">
+                                <option value="viewer" t-att-selected="state.generalLink === 'viewer'">Viewer</option>
+                                <option value="editor" t-att-selected="state.generalLink === 'editor'">Editor</option>
+                                <option value="none" t-att-selected="state.generalLink === 'none'">None</option>
+                            </select>
                         </div>
                     </div>
                 </t>
             </div>
             <t t-set-slot="footer">
-                <t t-if="state.mode === 'invite'">
-                    <button t-if="state.selectedUsers.length" type="button"
-                            class="btn btn-primary"
+                <t t-if="hasSelection">
+                    <button type="button" class="btn btn-primary"
                             t-att-disabled="!canShare"
                             t-on-click="onShare">
                         Share
                     </button>
-                    <button type="button" class="btn btn-secondary"
-                            t-on-click="onCopyLink">
+                    <button type="button" class="btn btn-secondary" t-on-click="onCopyLink">
                         <i class="fa fa-copy me-1"/>Copy Links
                     </button>
-                    <button type="button" class="btn btn-secondary"
-                            t-on-click="onDiscard">
+                    <button type="button" class="btn btn-secondary" t-on-click="onDiscard">
                         Discard
                     </button>
                 </t>
@@ -349,11 +372,12 @@
                         Done
                     </button>
                     <button type="button" class="btn btn-secondary" t-on-click="onCopyLink">
-                        <i class="fa fa-copy me-1"/>Copy Links
+                        <i class="fa fa-copy me-1"/>Copy Link
                     </button>
                 </t>
             </t>
         </Dialog>
-    </t>t>
-            </templates>
+    </t>
+
+</templates>
 

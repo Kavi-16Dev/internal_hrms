@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Documents (Community)',
-    'version': '19.0.0.7.0',
+    'version': '19.0.0.8.0',
     'category': 'Productivity/Documents',
     'summary': 'Document management, requests, drives and share links '
                 '- Community Edition equivalent of Odoo Enterprise Documents',
