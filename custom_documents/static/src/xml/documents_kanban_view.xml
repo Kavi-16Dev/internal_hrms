@@ -7,6 +7,10 @@
                 <t t-if="props.showButtons" t-call="custom_documents.NewButtonDropdown"/>
             </t>
         </xpath>
+        <!-- Download | Share next to the Actions menu. -->
+        <xpath expr="//t[@t-set-slot='control-panel-selection-actions']//t[@t-if='!env.isSmall']" position="inside">
+            <t t-call="custom_documents.SelectionActions"/>
+        </xpath>
     </t>
 
 </templates>

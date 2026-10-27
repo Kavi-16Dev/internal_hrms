@@ -4,6 +4,7 @@ import { KanbanController } from "@web/views/kanban/kanban_controller";
 import { Dropdown } from "@web/core/dropdown/dropdown";
 import { useDocumentsNewMenu } from "./documents_new_menu";
 import { useDocumentsFileViewer } from "./documents_file_viewer_hook";
+import { useDocumentsSelectionActions } from "./documents_selection_actions";
 
 export class DocumentsKanbanController extends KanbanController {
     static template = "custom_documents.KanbanView";
@@ -16,6 +17,8 @@ export class DocumentsKanbanController extends KanbanController {
         super.setup();
         this.documentsNew = useDocumentsNewMenu(this);
         this.documentsFileViewer = useDocumentsFileViewer(this);
+        // Download / Share buttons of the selection bar.
+        this.documentsSelection = useDocumentsSelectionActions(this);
     }
 
     /**

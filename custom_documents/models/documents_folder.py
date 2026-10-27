@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo import api, fields, models, _, SUPERUSER_ID
+from odoo.exceptions import AccessError, UserError
+
+ACCESS_LEVELS = [
+    ('none', 'None'),
+    ('viewer', 'Viewer'),
+    ('editor', 'Editor'),
+]
+ACCESS_RANK = {'none': 0, 'viewer': 1, 'editor': 2}
 
 
 class DocumentsFolder(models.Model):
@@ -63,6 +70,50 @@ class DocumentsFolder(models.Model):
         help='Users who can access this workspace in addition to its owner '
              'and Documents Managers.')
 
+    # -- Sharing ----------------------------------------------------------
+    # Folder sharing is inherited: whatever is granted on a folder also
+    # applies to every sub-folder and document below it.
+    #
+    # * General access (Share dialog > "General Access") is stored on the
+    #   folder itself; the ``effective_*`` fields add what the ancestors
+    #   grant, so record rules never have to walk the tree.
+    # * Per-person access lives on ``documents.share`` records
+    #   (share_type = 'folder').  ``shared_user_ids`` / ``shared_editor_ids``
+    #   are a denormalized index of those shares, already expanded to the
+    #   descendants of the shared folder.  It is rebuilt with SQL by
+    #   ``documents.share._sync_folder_shared_index`` (see that method).
+    access_internal = fields.Selection(
+        ACCESS_LEVELS, string='Internal Users Access', default='none',
+        required=True, copy=False,
+        help='Access granted to every internal user on this folder, its '
+             'sub-folders and its documents.')
+    access_via_link = fields.Selection(
+        ACCESS_LEVELS, string='Access Through Link', default='none',
+        required=True, copy=False,
+        help='Whether anyone holding the folder link may open its files. '
+             '"Editor" additionally allows downloading the files.')
+    effective_access_internal = fields.Selection(
+        ACCESS_LEVELS, string='Effective Internal Access',
+        compute='_compute_effective_access', store=True, recursive=True,
+        index=True,
+        help='Highest internal access granted on this folder or any of its '
+             'ancestors.')
+    effective_access_via_link = fields.Selection(
+        ACCESS_LEVELS, string='Effective Link Access',
+        compute='_compute_effective_access', store=True, recursive=True,
+        index=True,
+        help='Highest link access granted on this folder or any of its '
+             'ancestors.')
+    shared_user_ids = fields.Many2many(
+        'res.users', 'documents_folder_shared_user_rel', 'folder_id', 'user_id',
+        string='Shared With', copy=False, readonly=True,
+        help='Internal users who can read this folder, through a share on it '
+             'or on one of its ancestors.')
+    shared_editor_ids = fields.Many2many(
+        'res.users', 'documents_folder_shared_editor_rel', 'folder_id', 'user_id',
+        string='Shared With (Editors)', copy=False, readonly=True,
+        help='Subset of "Shared With" holding the Editor role.')
+
     document_ids = fields.One2many(
         'documents.document', 'folder_id', string='Documents')
     document_count = fields.Integer(
@@ -101,6 +152,23 @@ class DocumentsFolder(models.Model):
                 and document.attachment_id
             ))
 
+    @api.depends('access_internal', 'access_via_link',
+                 'parent_folder_id.effective_access_internal',
+                 'parent_folder_id.effective_access_via_link')
+    def _compute_effective_access(self):
+        """A folder is at least as open as its parent: general access set on
+        a folder is inherited by everything below it."""
+        for folder in self:
+            parent = folder.parent_folder_id
+            folder.effective_access_internal = max(
+                folder.access_internal or 'none',
+                parent.effective_access_internal or 'none',
+                key=ACCESS_RANK.get)
+            folder.effective_access_via_link = max(
+                folder.access_via_link or 'none',
+                parent.effective_access_via_link or 'none',
+                key=ACCESS_RANK.get)
+
     @api.model_create_multi
     def create(self, vals_list):
         """Keep employee ownership on every subfolder.
@@ -115,9 +183,23 @@ class DocumentsFolder(models.Model):
                 parent = self.sudo().browse(parent_id).exists()
                 if parent and parent.employee_id:
                     vals['employee_id'] = parent.employee_id.id
-        return super().create(vals_list)
+        folders = super().create(vals_list)
+        # A new sub-folder inherits the people its parent is shared with.
+        if any(vals.get('parent_folder_id') for vals in vals_list):
+            folders._sync_folder_shared_index_if_needed()
+        return folders
 
     def write(self, vals):
+        if ('access_internal' in vals or 'access_via_link' in vals) \
+                and self.env.uid != SUPERUSER_ID:
+            # General access is only changed through the Share dialog, which
+            # checks this too; this stops other write paths (e.g. the backend
+            # form) from bypassing the owner restriction.
+            for folder in self:
+                if not folder._can_manage_access():
+                    raise AccessError(_(
+                        'Only the owner of a folder or a Documents '
+                        'Administrator can change its general access.'))
         res = super().write(vals)
         if 'parent_folder_id' in vals:
             for folder in self:
@@ -125,7 +207,65 @@ class DocumentsFolder(models.Model):
                     folder.sudo().write({
                         'employee_id': folder.parent_folder_id.employee_id.id,
                     })
+            # Moving a folder changes which shares it inherits.
+            self._sync_folder_shared_index_if_needed()
         return res
+
+    def _sync_folder_shared_index_if_needed(self):
+        """Rebuild the folder sharing index, but only when some folder is
+        shared at all (otherwise the index is empty and stays empty)."""
+        has_folder_share = self.env['documents.share'].sudo().search_count([
+            ('share_type', '=', 'folder'),
+            ('state', '=', 'active'),
+        ], limit=1)
+        if has_folder_share:
+            self.env['documents.share']._sync_folder_shared_index()
+
+    # ------------------------------------------------------------------
+    # Sharing helpers
+    # ------------------------------------------------------------------
+    def _can_manage_access(self):
+        """Whether the current user may share this folder and change its
+        general access: Documents Administrators, or the owner of an
+        ordinary workspace / personal drive.
+
+        The Company Drive, the Inbox and employee (HR) folders are
+        restricted to Administrators so that private HR files cannot be
+        opened up by whoever happened to create the record."""
+        self.ensure_one()
+        user = self.env.user
+        if user.has_group('custom_documents.group_documents_manager'):
+            return True
+        folder = self.sudo()
+        if folder.folder_type == 'company' or folder.is_inbox or folder.employee_id:
+            return False
+        owner = folder.user_id or folder.create_uid
+        return owner == user
+
+    def _get_ancestor_folders(self):
+        """Ancestors of this folder, nearest first, without sudo checks
+        (callers decide what to expose)."""
+        self.ensure_one()
+        ancestors = self.env['documents.folder'].sudo()
+        parent = self.sudo().parent_folder_id
+        while parent:
+            ancestors |= parent
+            parent = parent.parent_folder_id
+        return ancestors
+
+    @api.model
+    def get_folder_share_state(self, folder_id):
+        """Small payload used by the kanban header to decide whether to show
+        its Share button for the folder currently open."""
+        folder = self.browse(folder_id).exists()
+        if not folder:
+            return False
+        folder.check_access('read')
+        return {
+            'id': folder.id,
+            'name': folder.name,
+            'can_share': folder._can_manage_access(),
+        }
 
     def name_get(self):
         result = []
@@ -174,6 +314,22 @@ class DocumentsFolder(models.Model):
                 ("active", "=", True),
                 ("folder_type", "=", "custom"),
             ], order="sequence, name, id")
+        elif category == "shared_with_me":
+            # Folders somebody else shared with the current user, either
+            # with them personally or with all internal users.  Only the
+            # top-most shared folder of a tree is listed: its sub-folders are
+            # reached by opening it.
+            uid = self.env.uid
+            shared = Folder.search([
+                ("active", "=", True),
+                ("folder_type", "!=", "company"),
+                "|",
+                ("shared_user_ids", "in", [uid]),
+                ("effective_access_internal", "in", ["viewer", "editor"]),
+            ], order="sequence, name, id")
+            shared = shared.filtered(
+                lambda f: (f.sudo().user_id or f.sudo().create_uid).id != uid)
+            folders = shared.filtered(lambda f: f.parent_folder_id not in shared)
         else:
             return []
 
@@ -185,6 +341,7 @@ class DocumentsFolder(models.Model):
             "folder_type": folder.folder_type,
             "document_count": folder.document_count,
             "color": folder.color,
+            "can_share": folder._can_manage_access(),
         } for folder in folders]
 
     def action_open_documents(self):

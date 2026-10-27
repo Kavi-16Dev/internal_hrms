@@ -9,12 +9,15 @@ import { ListController } from "@web/views/list/list_controller";
 import { Dropdown } from "@web/core/dropdown/dropdown";
 import { useDocumentsNewMenu } from "./documents_new_menu";
 import { useDocumentsFileViewer } from "./documents_file_viewer_hook";
+import { useDocumentsSelectionActions } from "./documents_selection_actions";
+import { DocumentsSelectionBox } from "./documents_selection_box";
 
 export class DocumentsListController extends ListController {
     static template = "custom_documents.ListView";
     static components = {
         ...ListController.components,
         Dropdown,
+        DocumentsSelectionBox,
     };
 
     setup() {
@@ -30,6 +33,9 @@ export class DocumentsListController extends ListController {
         // toggle there is visible to the controller's toolbar logic below.
         this.documentsFolderSelection = useState({ ids: new Set() });
         useSubEnv({ documentsFolderSelection: this.documentsFolderSelection });
+
+        // Download / Share buttons of the selection bar (files and folders).
+        this.documentsSelection = useDocumentsSelectionActions(this);
     }
 
     get hasSelectedRecords() {

@@ -186,7 +186,8 @@
                 </t>
                 <t t-else="">
                     <!-- Add People / Add Groups -->
-                    <div class="o_documents_share_target d-flex gap-4 mb-3">
+                    <div t-if="!isFolder or state.canManageAccess"
+                         class="o_documents_share_target d-flex gap-4 mb-3">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" id="documents_share_target_people"
                                    name="documents_share_target"
@@ -203,7 +204,8 @@
                         </div>
                     </div>
 
-                    <div class="o_documents_share_people_picker">
+                    <div t-if="!isFolder or state.canManageAccess"
+                         class="o_documents_share_people_picker">
                         <div class="o_documents_share_people_icon">
                             <i class="fa fa-user-plus"/>
                         </div>
@@ -285,7 +287,7 @@
                                 class="btn btn-outline-secondary o_documents_share_link_chip"
                                 t-on-click="onCopyLink"
                                 t-att-title="state.shareUrl">
-                            <i class="fa fa-file-o me-2"/>
+                            <i t-attf-class="fa {{ isFolder ? 'fa-folder-o' : 'fa-file-o' }} me-2"/>
                             <span t-esc="state.documentName"/>
                         </button>
                     </div>
@@ -318,6 +320,31 @@
                                 <t t-if="person.role === 'editor'">Editor</t>
                                 <t t-else="">Viewer</t>
                             </span>
+                            <button t-if="isFolder and state.canManageAccess" type="button"
+                                    class="btn btn-link text-muted p-0 ms-3 o_documents_share_remove_access"
+                                    title="Remove access"
+                                    t-on-click="() => this.onRemoveAccess(person)">
+                                <i class="fa fa-times"/>
+                            </button>
+                        </div>
+                        <!-- Folders only: people who already have access through
+                             a share on one of the parent folders. -->
+                        <div t-foreach="state.inheritedUsers" t-as="person" t-key="'i' + person.id"
+                             class="o_documents_share_access_person">
+                            <span class="o_documents_share_avatar o_documents_share_avatar_recipient">
+                                <t t-esc="person.name.slice(0, 1).toUpperCase()"/>
+                            </span>
+                            <span class="d-flex flex-column flex-grow-1">
+                                <strong t-esc="person.name"/>
+                                <small class="text-muted" t-esc="person.email"/>
+                            </span>
+                            <span class="text-muted text-end">
+                                <t t-if="person.role === 'editor'">Editor</t>
+                                <t t-else="">Viewer</t>
+                                <small t-if="person.inherited_from" class="d-block">
+                                    Inherited from <t t-esc="person.inherited_from"/>
+                                </small>
+                            </span>
                         </div>
                     </div>
 
@@ -328,6 +355,8 @@
                             <div>
                                 <div class="fw-semibold">Internal users <span class="text-info" title="Access for every internal user of the database">?</span></div>
                                 <div class="text-muted small" t-esc="internalHint"/>
+                                <div t-if="inheritedInternalHint" class="text-muted small fst-italic"
+                                     t-esc="inheritedInternalHint"/>
                             </div>
                             <select class="form-select form-select-sm o_documents_share_select"
                                     t-att-disabled="!state.canManageAccess"

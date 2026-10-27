@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Download / Share, appended to the selection bar of the list and
+         kanban views right after the Actions menu.  Rendered through t-call
+         from the controller templates, so `documentsSelection` is the one set
+         up by useDocumentsSelectionActions in the controller. -->
+    <t t-name="custom_documents.SelectionActions">
+        <div class="btn-group o_documents_selection_actions" role="group">
+            <button type="button"
+                    class="btn btn-secondary o_documents_download_selection"
+                    t-on-click="() => documentsSelection.onDownload()">
+                Download
+            </button>
+            <button type="button"
+                    class="btn btn-secondary o_documents_share_selection"
+                    t-att-disabled="documentsSelection.shareDisabled"
+                    t-att-title="documentsSelection.shareTitle"
+                    t-on-click="() => documentsSelection.onShare()">
+                Share
+            </button>
+        </div>
+    </t>
+
+</templates>

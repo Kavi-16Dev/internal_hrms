@@ -17,6 +17,11 @@ import { _t } from "@web/core/l10n/translation";
  *   - General access / Access through link
  *   - Share / Copy Links / Discard
  *
+ * The same dialog also shares a *folder* (pass ``folderId`` instead of
+ * ``documentId``).  Access granted on a folder is inherited by its
+ * sub-folders and documents: the dialog lists the people who already have
+ * access through an ancestor folder, and lets the owner remove direct access.
+ *
  * This is deliberately a custom OWL dialog so Community does not depend on
  * Enterprise-only Documents sharing widgets.
  */
@@ -24,7 +29,9 @@ export class DocumentsShareDialog extends Component {
     static template = "custom_documents.ShareDialog";
     static components = { Dialog };
     static props = {
-        documentId: { type: Number },
+        // Exactly one of documentId / folderId is expected.
+        documentId: { type: Number, optional: true },
+        folderId: { type: Number, optional: true },
         documentName: { type: String, optional: true },
         onShared: { type: Function, optional: true },
         close: { type: Function, optional: true },
@@ -39,6 +46,10 @@ export class DocumentsShareDialog extends Component {
             documentName: this.props.documentName || "",
             shareUrl: "",
             users: [],
+            // People with access through a share on an ancestor folder.
+            inheritedUsers: [],
+            // Access inherited from the parent folder: {internal, link, from}.
+            inheritedAccess: null,
             owner: null,
             selectedUsers: [],
             selectedGroups: [],
@@ -60,8 +71,34 @@ export class DocumentsShareDialog extends Component {
         });
     }
 
+    get isFolder() {
+        return !!this.props.folderId;
+    }
+
     get title() {
-        return _t("Share: %s", this.state.documentName || "Document");
+        return _t(
+            "Share: %s",
+            this.state.documentName || (this.isFolder ? _t("Folder") : _t("Document"))
+        );
+    }
+
+    /** Server method names and the id argument differ for folders. */
+    get targetId() {
+        return this.isFolder ? this.props.folderId : this.props.documentId;
+    }
+
+    get methods() {
+        return this.isFolder
+            ? {
+                  load: "get_folder_share_dialog_data",
+                  general: "set_folder_general_access",
+                  share: "action_share_folder_internal",
+              }
+            : {
+                  load: "get_share_dialog_data",
+                  general: "set_general_access",
+                  share: "action_share_internal",
+              };
     }
 
     get hasSelection() {
@@ -73,6 +110,13 @@ export class DocumentsShareDialog extends Component {
     }
 
     get internalHint() {
+        if (this.isFolder) {
+            return {
+                none: _t("Only people with access can open this folder"),
+                viewer: _t("Can only view the folder and everything in it."),
+                editor: _t("Can view and edit the files in this folder. Cannot delete."),
+            }[this.state.generalInternal];
+        }
         return {
             none: _t("Only people with access can open with the link"),
             viewer: _t("Can only view. Cannot rename, move, or delete."),
@@ -80,7 +124,24 @@ export class DocumentsShareDialog extends Component {
         }[this.state.generalInternal];
     }
 
+    /** Hint shown when the parent folder already opens this one up. */
+    get inheritedInternalHint() {
+        const inherited = this.state.inheritedAccess;
+        if (!this.isFolder || !inherited || !inherited.from || inherited.internal === "none") {
+            return "";
+        }
+        const level = inherited.internal === "editor" ? _t("Editor") : _t("Viewer");
+        return _t("Also inherited from %s: internal users are %s.", inherited.from, level);
+    }
+
     get linkHint() {
+        if (this.isFolder) {
+            return {
+                none: _t("No one on the internet can access"),
+                viewer: _t("Anyone on the internet with the link can view the files"),
+                editor: _t("Anyone on the internet with the link can view and download the files"),
+            }[this.state.generalLink];
+        }
         return {
             none: _t("No one on the internet can access"),
             viewer: _t("Anyone on the internet with the link can view"),
@@ -100,19 +161,29 @@ export class DocumentsShareDialog extends Component {
         try {
             const data = await this.orm.call(
                 "documents.share",
-                "get_share_dialog_data",
-                [this.props.documentId]
+                this.methods.load,
+                [this.targetId]
             );
-            this.state.documentName = data.document.name;
-            this.state.shareUrl = data.share_url || "";
-            this.state.users = data.users || [];
-            this.state.owner = data.owner || null;
+            this.applyDialogData(data);
             this.state.selectedUsers = [];
             this.state.selectedGroups = [];
-            this.applyGeneralAccess(data);
         } finally {
             this.state.loading = false;
         }
+    }
+
+    /** Apply the part of a server payload shared by load / share / access changes. */
+    applyDialogData(data) {
+        const target = data.folder || data.document;
+        if (target) {
+            this.state.documentName = target.name;
+        }
+        this.state.shareUrl = data.share_url || this.state.shareUrl || "";
+        this.state.users = data.users || [];
+        this.state.inheritedUsers = data.inherited_users || [];
+        this.state.inheritedAccess = data.inherited_access || null;
+        this.state.owner = data.owner || null;
+        this.applyGeneralAccess(data);
     }
 
     applyGeneralAccess(data) {
@@ -120,6 +191,29 @@ export class DocumentsShareDialog extends Component {
         this.state.generalInternal = access.internal || "none";
         this.state.generalLink = access.link || "none";
         this.state.canManageAccess = data.can_manage_access !== false;
+    }
+
+    /**
+     * Remove a person's direct access to the folder (folders only).  Access
+     * inherited from an ancestor is not listed here: it is removed where it
+     * was granted.
+     */
+    async onRemoveAccess(person) {
+        if (!this.isFolder || !this.state.canManageAccess) {
+            return;
+        }
+        const result = await this.orm.call(
+            "documents.share",
+            "action_remove_folder_access",
+            [this.props.folderId, person.id]
+        );
+        this.applyDialogData(result);
+        this.notification.add(_t("Access removed for %s.", person.name), {
+            type: "success",
+        });
+        if (this.props.onShared) {
+            await this.props.onShared(result);
+        }
     }
 
     onTargetChange(target) {
@@ -198,12 +292,12 @@ export class DocumentsShareDialog extends Component {
             this.state.generalLink = value;
         }
         try {
-            const data = await this.orm.call("documents.share", "set_general_access", [
-                this.props.documentId,
+            const data = await this.orm.call("documents.share", this.methods.general, [
+                this.targetId,
                 kind === "internal" ? value : null,
                 kind === "link" ? value : null,
             ]);
-            this.applyGeneralAccess(data);
+            this.applyDialogData(data);
             if (this.props.onShared) {
                 await this.props.onShared(data);
             }
@@ -249,28 +343,34 @@ export class DocumentsShareDialog extends Component {
 
         this.state.saving = true;
         try {
-            const result = await this.orm.call(
-                "documents.share",
-                "action_share_internal",
-                [
-                    this.props.documentId,
-                    this.selectedIds,
-                    this.state.role,
-                    this.state.notify,
-                    this.state.message || false,
-                    "none",
-                    this.state.selectedGroups.map((group) => group.id),
-                ]
-            );
-            this.state.shareUrl = result.share_url || this.state.shareUrl;
-            this.state.users = result.users || this.state.users;
-            this.state.owner = result.owner || this.state.owner;
+            const groupIds = this.state.selectedGroups.map((group) => group.id);
+            // The folder method has no per-share "internal access" argument:
+            // general access is saved on the folder itself.
+            const args = this.isFolder
+                ? [
+                      this.props.folderId,
+                      this.selectedIds,
+                      this.state.role,
+                      this.state.notify,
+                      this.state.message || false,
+                      groupIds,
+                  ]
+                : [
+                      this.props.documentId,
+                      this.selectedIds,
+                      this.state.role,
+                      this.state.notify,
+                      this.state.message || false,
+                      "none",
+                      groupIds,
+                  ];
+            const result = await this.orm.call("documents.share", this.methods.share, args);
+            this.applyDialogData(result);
             this.state.selectedUsers = [];
             this.state.selectedGroups = [];
             this.state.message = "";
             this.state.search = "";
             this.state.suggestions = [];
-            this.applyGeneralAccess(result);
             this.notification.add(
                 _t("Successfully Shared. Member added."),
                 { type: "success" }

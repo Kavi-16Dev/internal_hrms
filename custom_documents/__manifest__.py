@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Documents (Community)',
-    'version': '19.0.0.8.0',
+    'version': '19.0.0.9.0',
     'category': 'Productivity/Documents',
     'summary': 'Document management, requests, drives and share links '
                 '- Community Edition equivalent of Odoo Enterprise Documents',
@@ -35,6 +35,8 @@ Odoo Enterprise "Documents" application, built to run on Community Edition:
             'custom_documents/static/src/js/documents_list_renderer.js',
             'custom_documents/static/src/js/documents_list_view.js',
             'custom_documents/static/src/js/documents_search_panel.js',
+            'custom_documents/static/src/js/documents_selection_actions.js',
+            'custom_documents/static/src/js/documents_selection_box.js',
             'custom_documents/static/src/js/documents_file_viewer.js',
             'custom_documents/static/src/js/documents_share_dialog.js',
             'custom_documents/static/src/js/documents_file_viewer_hook.js',
@@ -45,6 +47,7 @@ Odoo Enterprise "Documents" application, built to run on Community Edition:
             'custom_documents/static/src/xml/documents_list_view.xml',
             'custom_documents/static/src/xml/documents_list_renderer.xml',
             'custom_documents/static/src/xml/documents_search_panel.xml',
+            'custom_documents/static/src/xml/documents_selection_actions.xml',
             'custom_documents/static/src/xml/documents_file_viewer.xml',
             'custom_documents/static/src/scss/documents_search_panel.scss',
             'custom_documents/static/src/scss/documents_list_renderer.scss',

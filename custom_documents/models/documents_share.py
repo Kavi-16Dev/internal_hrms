@@ -112,6 +112,12 @@ class DocumentsShare(models.Model):
     def _get_shared_documents(self):
         self.ensure_one()
         if self.share_type == 'folder' and self.folder_id:
+            if self.is_document_link and \
+                    self.folder_id.sudo().effective_access_via_link not in ('viewer', 'editor'):
+                # Same rule as for a document: closing "Access through link"
+                # on the folder (and on all its ancestors) closes the link
+                # even though the token itself is still active.
+                return self.env['documents.document'].sudo()
             return self.env['documents.document'].sudo().search(
                 [('folder_id', 'child_of', self.folder_id.id)])
         documents = self.document_ids
@@ -207,42 +213,106 @@ class DocumentsShare(models.Model):
             """
         )
         self.env['documents.document'].invalidate_model(['shared_user_ids'])
+        self._sync_folder_shared_index()
         return True
 
+    @api.model
+    def _sync_folder_shared_index(self):
+        """Rebuild the folder sharing index from the active folder shares.
+
+        ``documents.folder.shared_user_ids`` / ``shared_editor_ids`` list who
+        may read / edit each folder.  A share on folder F applies to F and to
+        every folder below it, so the index is expanded to the descendants
+        here (``parent_path`` of a descendant starts with the parent_path of
+        F) and record rules only ever look at one hop:
+        ``folder_id.shared_user_ids``.
+
+        As for documents, the share records stay the single source of truth
+        and the relation tables are rebuilt with SQL, which is deterministic
+        and independent of the recipients' own record rules.  Shares past
+        their expiration date are ignored, so the daily rebuild also
+        enforces expiry.
+        """
+        self.env.flush_all()
+        cr = self.env.cr
+        cr.execute("DELETE FROM documents_folder_shared_user_rel")
+        cr.execute("DELETE FROM documents_folder_shared_editor_rel")
+        base_from = """
+              FROM documents_share share
+              JOIN documents_share_user_rel user_rel
+                ON user_rel.share_id = share.id
+              JOIN documents_folder root
+                ON root.id = share.folder_id
+              JOIN documents_folder child
+                ON starts_with(child.parent_path, root.parent_path)
+             WHERE share.state = 'active'
+               AND share.share_type = 'folder'
+               AND user_rel.user_id IS NOT NULL
+               AND root.parent_path IS NOT NULL
+               AND (share.date_deadline IS NULL
+                    OR share.date_deadline >= CURRENT_DATE)
+        """
+        cr.execute(
+            "INSERT INTO documents_folder_shared_user_rel (folder_id, user_id) "
+            "SELECT DISTINCT child.id, user_rel.user_id " + base_from +
+            " ON CONFLICT DO NOTHING")
+        cr.execute(
+            "INSERT INTO documents_folder_shared_editor_rel (folder_id, user_id) "
+            "SELECT DISTINCT child.id, user_rel.user_id " + base_from +
+            " AND share.role = 'editor' ON CONFLICT DO NOTHING")
+        self.env['documents.folder'].invalidate_model(
+            ['shared_user_ids', 'shared_editor_ids'])
+
     def _documents_affected_by_share(self):
-        """Return documents whose shared-user index may need rebuilding."""
+        """Return documents whose shared-user index may need rebuilding.
+
+        Only shares on selected documents feed that index.  Folder shares are
+        indexed on the folders themselves (``_sync_folder_shared_index``), so
+        they never need a per-document rebuild.
+        """
         documents = self.env['documents.document']
         for share in self.sudo():
-            if share.share_type == 'folder' and share.folder_id:
-                documents |= self.env['documents.document'].sudo().search([
-                    ('folder_id', 'child_of', share.folder_id.id),
-                ])
-            else:
+            if share.share_type != 'folder':
                 documents |= share.document_ids
         return documents
+
+    def _affects_folder_index(self):
+        """Whether any of these shares grants people access to a folder."""
+        return any(
+            share.share_type == 'folder' and share.recipient_user_ids
+            for share in self.sudo())
 
     @api.model_create_multi
     def create(self, vals_list):
         shares = super().create(vals_list)
         self._sync_shared_user_index(shares._documents_affected_by_share())
+        if shares._affects_folder_index():
+            self._sync_folder_shared_index()
         return shares
 
     def write(self, vals):
         tracked_fields = {
             'state', 'share_type', 'folder_id', 'document_ids',
-            'recipient_user_ids',
+            'recipient_user_ids', 'role', 'date_deadline',
         }
-        before = self._documents_affected_by_share() if tracked_fields.intersection(vals) else self.env['documents.document']
+        tracking = bool(tracked_fields.intersection(vals))
+        before = self._documents_affected_by_share() if tracking else self.env['documents.document']
+        folder_before = self._affects_folder_index() if tracking else False
         result = super().write(vals)
-        if tracked_fields.intersection(vals):
+        if tracking:
             after = self._documents_affected_by_share()
             self._sync_shared_user_index(before | after)
+            if folder_before or self._affects_folder_index():
+                self._sync_folder_shared_index()
         return result
 
     def unlink(self):
         affected = self._documents_affected_by_share()
+        folder_affected = self._affects_folder_index()
         result = super().unlink()
         self._sync_shared_user_index(affected)
+        if folder_affected:
+            self._sync_folder_shared_index()
         return result
 
     @api.model
@@ -479,3 +549,288 @@ class DocumentsShare(models.Model):
             'share_id': created_or_updated[:1].id,
             'document_id': document.id,
         }
+
+    # ------------------------------------------------------------------
+    # Folder sharing (Share dialog opened on a folder)
+    #
+    # Same dialog and same ``documents.share`` records as for documents, but
+    # with share_type = 'folder'.  Whatever is granted on a folder is
+    # inherited by its sub-folders and documents: per-person roles through the
+    # folder index, general access through the folder's ``effective_*``
+    # fields.
+    # ------------------------------------------------------------------
+    @api.model
+    def _get_folder_for_share(self, folder_id):
+        folder = self.env['documents.folder'].browse(folder_id).exists()
+        if not folder:
+            raise UserError(_('The folder no longer exists.'))
+        folder.check_access('read')
+        return folder
+
+    @api.model
+    def _folder_share_people(self, shares, exclude_user_ids=()):
+        """Flatten shares to one entry per user, keeping the highest role."""
+        people = {}
+        for share in shares.sorted('id'):
+            for user in share.recipient_user_ids:
+                if user.id in exclude_user_ids:
+                    continue
+                entry = people.get(user.id)
+                if entry and not (share.role == 'editor' and entry['role'] != 'editor'):
+                    continue
+                people[user.id] = {
+                    'id': user.id,
+                    'name': user.name,
+                    'email': user.email or user.login or '',
+                    'role': share.role or 'viewer',
+                    'inherited_from': (
+                        share.folder_id.name if share.folder_id else False),
+                }
+        return sorted(people.values(), key=lambda p: (p['name'] or '').lower())
+
+    @api.model
+    def _get_or_create_folder_link_share(self, folder):
+        """Return the tokenized share behind a folder's "Copy Link".
+
+        As for documents the token is stable and whether it opens anything is
+        decided by the folder's effective "Access through link"
+        (see ``_get_shared_documents``)."""
+        folder = folder.sudo()
+        Share = self.sudo()
+        share = Share.search([
+            ('state', '=', 'active'),
+            ('share_type', '=', 'folder'),
+            ('folder_id', '=', folder.id),
+            ('is_document_link', '=', True),
+        ], order='create_date desc, id desc', limit=1)
+        if not share:
+            share = Share.create({
+                'name': _('Share: %s', folder.name),
+                'share_type': 'folder',
+                'folder_id': folder.id,
+                'recipient_user_ids': [Command.clear()],
+                'access_mode': 'download' if folder.effective_access_via_link == 'editor' else 'view',
+                'role': 'viewer',
+                'internal_access': 'none',
+                'is_document_link': True,
+                'date_deadline': False,
+                'owner_id': self.env.user.id,
+                'company_id': folder.company_id.id or self.env.company.id,
+                'state': 'active',
+            })
+        return share
+
+    @api.model
+    def get_folder_share_dialog_data(self, folder_id):
+        """State of the Share dialog for a folder.
+
+        Same shape as ``get_share_dialog_data`` so the dialog can render both,
+        plus ``inherited_users`` (people who have access through a share on an
+        ancestor folder) and the access inherited from the ancestors."""
+        folder = self._get_folder_for_share(folder_id)
+        can_manage = folder._can_manage_access()
+        owner = folder.sudo().user_id or folder.sudo().create_uid or self.env.user
+
+        # Managers and the owner see every recipient, not just the shares
+        # they happened to create themselves.
+        Share = self.sudo() if can_manage else self
+        direct_shares = Share.search([
+            ('state', '=', 'active'),
+            ('share_type', '=', 'folder'),
+            ('folder_id', '=', folder.id),
+        ])
+        users = self._folder_share_people(direct_shares, exclude_user_ids=(owner.id,))
+
+        inherited_users = []
+        parent = folder.sudo().parent_folder_id
+        if can_manage and parent:
+            ancestors = folder._get_ancestor_folders()
+            inherited_shares = self.sudo().search([
+                ('state', '=', 'active'),
+                ('share_type', '=', 'folder'),
+                ('folder_id', 'in', ancestors.ids),
+            ])
+            direct_ids = {user['id'] for user in users}
+            inherited_users = [
+                user for user in self._folder_share_people(
+                    inherited_shares, exclude_user_ids=(owner.id,))
+                if user['id'] not in direct_ids
+            ]
+
+        sudo_folder = folder.sudo()
+        link_share = self._get_or_create_folder_link_share(folder)
+        return {
+            'folder': {
+                'id': folder.id,
+                'name': folder.name,
+            },
+            'is_folder': True,
+            'owner': {
+                'id': owner.id,
+                'name': owner.name,
+                'email': owner.email or owner.login or '',
+                'is_current_user': owner.id == self.env.user.id,
+                'role': 'owner',
+            },
+            'users': users,
+            'inherited_users': inherited_users,
+            'general_access': {
+                'internal': sudo_folder.access_internal,
+                'link': sudo_folder.access_via_link,
+            },
+            'inherited_access': {
+                'internal': parent.effective_access_internal if parent else 'none',
+                'link': parent.effective_access_via_link if parent else 'none',
+                'from': parent.name if parent else False,
+            },
+            'can_manage_access': can_manage,
+            'share_url': link_share.full_url,
+        }
+
+    @api.model
+    def set_folder_general_access(self, folder_id, internal=None, link=None):
+        """Persist the Share dialog's "General Access" dropdowns for a folder."""
+        folder = self._get_folder_for_share(folder_id)
+        if not folder._can_manage_access():
+            raise AccessError(_(
+                'Only the owner of a folder or a Documents Administrator can '
+                'change its general access.'))
+
+        allowed = ('none', 'viewer', 'editor')
+        vals = {}
+        if internal is not None:
+            if internal not in allowed:
+                raise UserError(_('Invalid access level.'))
+            vals['access_internal'] = internal
+        if link is not None:
+            if link not in allowed:
+                raise UserError(_('Invalid access level.'))
+            vals['access_via_link'] = link
+        if vals:
+            folder.sudo().write(vals)
+            if 'access_via_link' in vals:
+                link_share = self._get_or_create_folder_link_share(folder)
+                link_share.write({
+                    'access_mode': (
+                        'download'
+                        if folder.sudo().effective_access_via_link == 'editor'
+                        else 'view'),
+                })
+        return self.get_folder_share_dialog_data(folder.id)
+
+    @api.model
+    def action_share_folder_internal(self, folder_id, user_ids=None, role='viewer',
+                                     notify=True, message=False, group_ids=None):
+        """Grant internal users (or all members of groups) access to a folder.
+
+        Like ``action_share_internal`` each recipient gets an independent
+        share, so roles never overwrite each other.  The access is inherited by
+        every sub-folder and document in the folder.
+
+        Viewers need nothing more than the basic internal-user access every
+        employee already has.  Editors are given the Documents Basic role,
+        the lowest level whose access rights allow editing documents."""
+        folder = self._get_folder_for_share(folder_id)
+        if not folder._can_manage_access():
+            raise AccessError(_(
+                'Only the owner of a folder or a Documents Administrator can '
+                'share it.'))
+
+        users = self.env['res.users'].browse(
+            [int(uid) for uid in (user_ids or []) if uid]).exists()
+        group_ids = [int(gid) for gid in (group_ids or []) if gid]
+        if group_ids:
+            users |= self.env['res.users'].sudo().search([
+                ('share', '=', False), ('active', '=', True),
+                ('group_ids', 'in', group_ids),
+            ])
+        owner = folder.sudo().user_id or folder.sudo().create_uid
+        users -= self.env.user
+        users -= owner
+        if not users:
+            raise UserError(_('Please select at least one person.'))
+        if any(user.share for user in users):
+            raise UserError(_('Only internal users can be added to this share.'))
+
+        role = role if role in ('viewer', 'editor') else 'viewer'
+        if role == 'editor':
+            basic_group = self.env.ref(
+                'custom_documents.group_documents_basic', raise_if_not_found=False)
+            if basic_group:
+                users.sudo().write({'group_ids': [Command.link(basic_group.id)]})
+
+        shares = self.env['documents.share']
+        for user in users:
+            share = self.sudo().search([
+                ('state', '=', 'active'),
+                ('share_type', '=', 'folder'),
+                ('folder_id', '=', folder.id),
+                ('recipient_user_ids', '=', user.id),
+                ('is_document_link', '=', False),
+            ], limit=1)
+            vals = {
+                'share_type': 'folder',
+                'folder_id': folder.id,
+                'document_ids': [Command.clear()],
+                'recipient_user_ids': [Command.set([user.id])],
+                'access_mode': 'view' if role == 'viewer' else 'upload',
+                'role': role,
+                'notify': bool(notify),
+                'message': message or False,
+                'internal_access': 'none',
+                'partner_id': False,
+                'email': user.email or user.login or False,
+                'owner_id': self.env.user.id,
+                'company_id': folder.company_id.id or self.env.company.id,
+                # People granted access do not expire like a public link.
+                'date_deadline': False,
+                'state': 'active',
+            }
+            if share:
+                share.write(vals)
+            else:
+                share = self.sudo().create(vals)
+            shares |= share
+
+            if notify and user.partner_id:
+                body = message or _(
+                    '%(user)s shared the folder "%(folder)s" with you.',
+                    user=self.env.user.name, folder=folder.name)
+                self.env['res.partner'].message_notify(
+                    partner_ids=user.partner_id.ids,
+                    author_id=self.env.user.partner_id.id,
+                    subject=_('Folder shared with you: %s', folder.name),
+                    body=body,
+                    email_layout_xmlid='mail.mail_notification_light',
+                )
+
+        self._sync_folder_shared_index()
+        return self.get_folder_share_dialog_data(folder.id) | {
+            'share_id': shares[:1].id,
+            'folder_id': folder.id,
+        }
+
+    @api.model
+    def action_remove_folder_access(self, folder_id, user_id):
+        """Revoke one person's direct access to a folder.
+
+        Access that comes from a share on an ancestor folder (or from general
+        access) is not affected: it has to be removed where it was granted."""
+        folder = self._get_folder_for_share(folder_id)
+        if not folder._can_manage_access():
+            raise AccessError(_(
+                'Only the owner of a folder or a Documents Administrator can '
+                'change who has access to it.'))
+        shares = self.sudo().search([
+            ('state', '=', 'active'),
+            ('share_type', '=', 'folder'),
+            ('folder_id', '=', folder.id),
+            ('recipient_user_ids', '=', int(user_id)),
+            ('is_document_link', '=', False),
+        ])
+        for share in shares:
+            if share.recipient_user_ids - self.env['res.users'].browse(int(user_id)):
+                share.write({'recipient_user_ids': [Command.unlink(int(user_id))]})
+            else:
+                share.write({'state': 'revoked'})
+        return self.get_folder_share_dialog_data(folder.id)

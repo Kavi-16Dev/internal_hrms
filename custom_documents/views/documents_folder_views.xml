@@ -81,6 +81,15 @@
                         <field name="member_ids" widget="many2many_tags"/>
                         <field name="company_id" groups="base.group_multi_company"/>
                     </group>
+                    <!-- Read-only here on purpose: access is granted from the
+                         Share dialog (Documents > open a folder > Share). -->
+                    <group string="Sharing (inherited by sub-folders and documents)">
+                        <field name="access_internal" readonly="1"/>
+                        <field name="access_via_link" readonly="1"/>
+                        <field name="effective_access_internal"/>
+                        <field name="effective_access_via_link"/>
+                        <field name="shared_user_ids" widget="many2many_tags"/>
+                    </group>
                     <notebook>
                         <page string="Description">
                             <field name="description"/>

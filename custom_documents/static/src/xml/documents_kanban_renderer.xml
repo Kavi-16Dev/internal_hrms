@@ -3,22 +3,40 @@
 
     <t t-name="custom_documents.DocumentsKanbanRenderer" t-inherit="web.KanbanRenderer" t-inherit-mode="primary">
         <xpath expr="//t[@t-foreach='getGroupsOrRecords()']" position="before">
+            <!-- Share the folder that is currently open (when allowed). -->
+            <div t-if="currentFolder and currentFolder.can_share"
+                 class="o_documents_current_folder_bar w-100 mb-3 d-flex align-items-center">
+                <i class="fa fa-folder-open-o me-2"/>
+                <strong class="me-3 text-truncate" t-esc="currentFolder.name"/>
+                <button type="button" class="btn btn-sm btn-primary o_documents_share_current_folder"
+                        t-on-click="() => this.shareDocumentFolder(currentFolder)">
+                    <i class="fa fa-share-alt me-1"/>Share
+                </button>
+            </div>
             <div t-if="documentFolders.length" class="o_documents_folder_browser w-100 mb-4">
                 <h4 class="o_documents_section_title mb-3">Folders</h4>
                 <div class="o_documents_folder_grid">
                     <t t-foreach="documentFolders" t-as="folder" t-key="folder.id">
-                        <button type="button"
-                                class="o_documents_folder_card text-start"
-                                t-on-click="() => this.openDocumentFolder(folder)"
-                                t-att-title="folder.name">
-                            <div class="o_documents_folder_card_main">
-                                <i class="fa fa-folder-o o_documents_folder_icon me-2"/>
-                                <span class="o_documents_folder_name text-truncate" t-esc="folder.name"/>
-                            </div>
-                            <div t-if="folder.parent_name" class="o_documents_folder_parent text-truncate">
-                                In <t t-esc="folder.parent_name"/>
-                            </div>
-                        </button>
+                        <div class="o_documents_folder_card_wrap">
+                            <button type="button"
+                                    class="o_documents_folder_card text-start"
+                                    t-on-click="() => this.openDocumentFolder(folder)"
+                                    t-att-title="folder.name">
+                                <div class="o_documents_folder_card_main">
+                                    <i class="fa fa-folder-o o_documents_folder_icon me-2"/>
+                                    <span class="o_documents_folder_name text-truncate" t-esc="folder.name"/>
+                                </div>
+                                <div t-if="folder.parent_name" class="o_documents_folder_parent text-truncate">
+                                    In <t t-esc="folder.parent_name"/>
+                                </div>
+                            </button>
+                            <button t-if="folder.can_share" type="button"
+                                    class="btn btn-link o_documents_folder_share"
+                                    title="Share" aria-label="Share"
+                                    t-on-click.stop="() => this.shareDocumentFolder(folder)">
+                                <i class="fa fa-share-alt"/>
+                            </button>
+                        </div>
                     </t>
                 </div>
             </div>

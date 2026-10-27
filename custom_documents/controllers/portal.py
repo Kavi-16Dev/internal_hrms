@@ -29,7 +29,9 @@ class DocumentsShareController(http.Controller):
         # single available attachment we stream it inline from the secure
         # token route.  Multi-document shares and requested/upload shares
         # continue to use the portal page.
-        if valid and len(documents) == 1:
+        # A folder link always lists the folder's files, even when it holds a
+        # single one.
+        if valid and share.share_type != 'folder' and len(documents) == 1:
             document = documents[:1]
             if document.attachment_id and document.state != 'requested':
                 return request.env['ir.binary'].sudo()._get_stream_from(

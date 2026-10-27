@@ -55,6 +55,27 @@
     gap: 0.75rem;
 }
 
+.o_documents_folder_card_wrap {
+    position: relative;
+    min-width: 0;
+}
+
+// Share shortcut on a folder card: appears on hover / keyboard focus.
+.o_documents_folder_share {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.35rem;
+    padding: 0.2rem 0.45rem;
+    color: var(--o-muted-color, #6c757d);
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.o_documents_folder_card_wrap:hover .o_documents_folder_share,
+.o_documents_folder_share:focus {
+    opacity: 1;
+}
+
 .o_documents_folder_card {
     min-height: 68px;
     width: 100%;

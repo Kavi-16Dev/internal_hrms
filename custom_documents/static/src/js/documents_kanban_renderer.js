@@ -4,6 +4,7 @@ import { onWillStart, useRef, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { KanbanRenderer } from "@web/views/kanban/kanban_renderer";
 import { _t } from "@web/core/l10n/translation";
+import { DocumentsShareDialog } from "./documents_share_dialog";
 
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
@@ -30,7 +31,8 @@ export class DocumentsKanbanRenderer extends KanbanRenderer {
         this.orm = useService("orm");
         this.action = useService("action");
         this.notification = useService("notification");
-        this.folderState = useState({ folders: [], loading: true });
+        this.dialog = useService("dialog");
+        this.folderState = useState({ folders: [], loading: true, current: null });
         this.requestedUploadState = useState({ documentId: false, uploading: false });
         this.requestedUploadInput = useRef("documentsRequestedUploadInput");
 
@@ -45,7 +47,29 @@ export class DocumentsKanbanRenderer extends KanbanRenderer {
 
     get showFolderBrowser() {
         const category = this.documentsContext.documents_sidebar_category || "all";
-        return ["all", "company"].includes(category) || !!this.documentsContext.documents_folder_id;
+        return (
+            ["all", "company", "shared_with_me"].includes(category) ||
+            !!this.documentsContext.documents_folder_id
+        );
+    }
+
+    /** The folder currently open ({id, name, can_share}), if any. */
+    get currentFolder() {
+        return this.folderState.current;
+    }
+
+    /**
+     * Open the Share dialog on a folder.  What is granted is inherited by the
+     * folder's sub-folders and documents.
+     */
+    shareDocumentFolder(folder) {
+        this.dialog.add(DocumentsShareDialog, {
+            folderId: folder.id,
+            documentName: folder.name,
+            onShared: async () => {
+                await this.loadDocumentFolders();
+            },
+        });
     }
 
     async loadDocumentFolders() {
@@ -56,13 +80,16 @@ export class DocumentsKanbanRenderer extends KanbanRenderer {
         }
 
         try {
+            const currentFolderId = this.documentsContext.documents_folder_id || false;
+            this.folderState.current = currentFolderId
+                ? await this.orm.call("documents.folder", "get_folder_share_state", [
+                      currentFolderId,
+                  ])
+                : null;
             this.folderState.folders = await this.orm.call(
                 "documents.folder",
                 "get_documents_view_folders",
-                [
-                    this.documentsContext.documents_sidebar_category || "all",
-                    this.documentsContext.documents_folder_id || false,
-                ],
+                [this.documentsContext.documents_sidebar_category || "all", currentFolderId],
             );
         } catch (error) {
             console.error("Documents folder browser failed to load", error);

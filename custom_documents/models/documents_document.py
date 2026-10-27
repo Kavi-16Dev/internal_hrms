@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import io
+import os
 import re
 from datetime import timedelta
 
@@ -631,6 +632,75 @@ class DocumentsDocument(models.Model):
             'type': 'ir.actions.act_url',
             'url': f'/web/content/{self.attachment_id.id}?download=true',
             'target': 'self',
+        }
+
+    # ------------------------------------------------------------------
+    # Download of a selection (files and/or folders)
+    # ------------------------------------------------------------------
+    @api.model
+    def _get_download_entries(self, document_ids=None, folder_ids=None):
+        """Files to download for a selection, as ``[(path, document)]``.
+
+        Selected files go at the root of the archive; a selected folder
+        becomes a directory holding its whole tree (sub-folders included).
+        Everything is searched with the current user's access rules, so a
+        folder never hands out files the user cannot read.  Placeholders,
+        links and files without content are skipped."""
+        Folder = self.env['documents.folder']
+        entries = []
+        used = set()
+
+        def add(path_parts, document):
+            parts = [(part or '').replace('/', '_').replace('\\', '_') or '_'
+                     for part in path_parts]
+            path = '/'.join(parts)
+            base, ext = os.path.splitext(path)
+            counter = 1
+            while path.lower() in used:
+                counter += 1
+                path = f'{base} ({counter}){ext}'
+            used.add(path.lower())
+            entries.append((path, document))
+
+        def downloadable(documents):
+            return documents.filtered(
+                lambda doc: doc.type == 'binary' and doc.attachment_id
+                and doc.state != 'requested')
+
+        for document in downloadable(self.browse(document_ids or []).exists()):
+            add([document._get_download_filename()], document)
+
+        for folder in Folder.browse(folder_ids or []).exists():
+            tree = Folder.search([('id', 'child_of', folder.id)])
+            documents = downloadable(self.search([('folder_id', 'in', tree.ids)]))
+            for document in documents:
+                chain = []
+                current = document.folder_id
+                while current and current.id != folder.id:
+                    chain.insert(0, current.name)
+                    current = current.parent_folder_id
+                add([folder.name] + chain + [document._get_download_filename()], document)
+        return entries
+
+    def _get_download_filename(self):
+        """File name offered for this document, keeping the file extension
+        when the document was renamed without one."""
+        self.ensure_one()
+        name = self.name or 'document'
+        if not os.path.splitext(name)[1]:
+            name += os.path.splitext(self.attachment_id.sudo().name or '')[1]
+        return name
+
+    @api.model
+    def get_download_info(self, document_ids=None, folder_ids=None):
+        """What the Download button will produce for a selection: how many
+        files, and the attachment to serve directly when it is a single file
+        (anything else is sent as a zip by ``/documents/download``)."""
+        entries = self._get_download_entries(document_ids, folder_ids)
+        single = len(entries) == 1 and not folder_ids
+        return {
+            'count': len(entries),
+            'attachment_id': entries[0][1].attachment_id.id if single else False,
         }
 
     def _get_or_create_request_share(self):
