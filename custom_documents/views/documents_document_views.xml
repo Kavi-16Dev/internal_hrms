@@ -52,6 +52,7 @@
                 <field name="create_date"/>
                 <field name="show_create_applicant"/>
                 <field name="lock_uid"/>
+                <field name="activity_state"/>
                 <templates>
                     <t t-name="card">
                         <div class="oe_kanban_global_click">
@@ -70,6 +71,7 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <strong class="text-truncate"><field name="name"/></strong>
                                     <i t-if="record.lock_uid.raw_value" class="fa fa-lock text-muted ms-1" title="Locked"/>
+                                    <field name="activity_ids" widget="kanban_activity" class="ms-1"/>
                                     <a t-if="record.state.raw_value === 'requested'"
                                        type="open"
                                        class="text-success ms-auto me-1"
@@ -103,6 +105,25 @@
         </field>
     </record>
 
+    <record id="documents_document_view_activity" model="ir.ui.view">
+        <field name="name">documents.document.activity</field>
+        <field name="model">documents.document</field>
+        <field name="arch" type="xml">
+            <activity string="Documents">
+                <field name="owner_id"/>
+                <templates>
+                    <div t-name="activity-box">
+                        <field name="owner_id" widget="many2one_avatar_user"/>
+                        <div class="flex-grow-1">
+                            <field name="name" display="full" class="o_text_block o_text_bold"/>
+                            <field name="folder_id" muted="1" display="full"/>
+                        </div>
+                    </div>
+                </templates>
+            </activity>
+        </field>
+    </record>
+
     <record id="documents_document_view_list" model="ir.ui.view">
         <field name="name">documents.document.list</field>
         <field name="model">documents.document</field>
@@ -120,6 +141,7 @@
                 <field name="owner_id" optional="show"/>
                 <field name="lock_uid" string="Locked By" optional="hide"/>
                 <field name="tag_ids" widget="many2many_tags" optional="show"/>
+                <field name="activity_ids" widget="list_activity" optional="show"/>
                 <field name="state" widget="badge" decoration-warning="state == 'requested'"/>
                 <field name="file_size" optional="hide"/>
                 <field name="create_date" optional="show"/>
@@ -277,7 +299,7 @@
     <record id="documents_document_action" model="ir.actions.act_window">
         <field name="name">Documents</field>
         <field name="res_model">documents.document</field>
-        <field name="view_mode">kanban,list,form</field>
+        <field name="view_mode">kanban,list,activity,form</field>
         <field name="context">{'search_default_my_documents': 0, 'documents_sidebar_category': 'all'}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -289,7 +311,7 @@
     <record id="documents_document_action_my_drive" model="ir.actions.act_window">
         <field name="name">My Drive</field>
         <field name="res_model">documents.document</field>
-        <field name="view_mode">kanban,list,form</field>
+        <field name="view_mode">kanban,list,activity,form</field>
         <field name="domain">[('folder_id.folder_type', '=', 'employee'), ('folder_id.user_id', '=', uid)]</field>
         <field name="context">{'documents_sidebar_category': 'my_drive'}</field>
         <field name="help" type="html">
@@ -302,7 +324,7 @@
     <record id="documents_document_action_company_drive" model="ir.actions.act_window">
         <field name="name">Company</field>
         <field name="res_model">documents.document</field>
-        <field name="view_mode">kanban,list,form</field>
+        <field name="view_mode">kanban,list,activity,form</field>
         <field name="domain">[('folder_id.folder_type', '=', 'company')]</field>
         <field name="context">{'default_folder_is_company_drive': 1, 'documents_sidebar_category': 'company'}</field>
     </record>
@@ -310,7 +332,7 @@
     <record id="documents_document_action_shared_with_me" model="ir.actions.act_window">
         <field name="name">Shared with me</field>
         <field name="res_model">documents.document</field>
-        <field name="view_mode">kanban,list,form</field>
+        <field name="view_mode">kanban,list,activity,form</field>
         <field name="domain">[
             ('active', '=', True),
             ('state', '=', 'uploaded'),
@@ -332,7 +354,7 @@
     <record id="documents_document_action_requests" model="ir.actions.act_window">
         <field name="name">Requests</field>
         <field name="res_model">documents.document</field>
-        <field name="view_mode">kanban,list,form</field>
+        <field name="view_mode">kanban,list,activity,form</field>
         <field name="domain">[
             ('active', '=', True),
             ('state', '=', 'requested'),
@@ -352,7 +374,7 @@
     <record id="documents_document_action_inbox" model="ir.actions.act_window">
         <field name="name">Inbox</field>
         <field name="res_model">documents.document</field>
-        <field name="view_mode">kanban,list,form</field>
+        <field name="view_mode">kanban,list,activity,form</field>
         <field name="domain">[
             ('active', '=', True),
             ('state', '=', 'uploaded'),
@@ -372,7 +394,7 @@
     <record id="documents_document_action_recent" model="ir.actions.act_window">
         <field name="name">Recent</field>
         <field name="res_model">documents.document</field>
-        <field name="view_mode">kanban,list,form</field>
+        <field name="view_mode">kanban,list,activity,form</field>
         <field name="domain">[]</field>
         <field name="context">{'search_default_recent': 1, 'documents_sidebar_category': 'recent'}</field>
         <field name="help" type="html">
@@ -385,7 +407,7 @@
     <record id="documents_document_action_trash" model="ir.actions.act_window">
         <field name="name">Trash</field>
         <field name="res_model">documents.document</field>
-        <field name="view_mode">list,kanban,form</field>
+        <field name="view_mode">list,kanban,activity,form</field>
         <field name="domain">[('active', '=', False)]</field>
         <field name="context">{'active_test': False, 'documents_sidebar_category': 'trash'}</field>
         <field name="help" type="html">
