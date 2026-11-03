@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
+from odoo.exceptions import AccessError
 
 
 class HrEmployee(models.Model):
@@ -17,20 +18,24 @@ class HrEmployee(models.Model):
 
     @api.depends('document_folder_id')
     def _compute_document_count(self):
-        Document = self.env['documents.document'].sudo()
-        is_manager = self.env.user.has_group(
-            'custom_documents.group_documents_manager')
         for employee in self:
-            if not is_manager and employee.user_id != self.env.user:
-                employee.document_count = 0
-                continue
-            folder = employee.document_folder_id.sudo()
-            employee.document_count = Document.search_count([
-                ('folder_id', 'child_of', folder.id),
-                ('active', '=', True),
-                ('type', '=', 'binary'),
-                ('attachment_id', '!=', False),
-            ]) if folder else 0
+            employee.document_count = employee._get_own_document_count()
+
+    def _get_own_document_count(self):
+        """Files in this employee's folder tree; 0 unless the current user
+        is the employee or a Documents Administrator."""
+        self.ensure_one()
+        if self.env.user.has_group('custom_documents.group_documents_manager') \
+                or self.sudo().user_id == self.env.user:
+            folder = self.sudo()._get_documents_hr_folder(create=False)
+            if folder:
+                return self.env['documents.document'].sudo().search_count([
+                    ('folder_id', 'child_of', folder.id),
+                    ('active', '=', True),
+                    ('type', '=', 'binary'),
+                    ('attachment_id', '!=', False),
+                ])
+        return 0
 
     # def _get_documents_hr_folder(self, create=True):
     #     """Return the employee's centralized HR Documents folder.
@@ -153,7 +158,38 @@ class HrEmployee(models.Model):
 
         if create:
             self._ensure_documents_hr_contract_folder(folder, company)
+            self._ensure_documents_hr_subfolders(folder, company)
         return folder
+
+    def _ensure_documents_hr_subfolders(self, employee_folder, company):
+        """Create the sub-folders listed in Settings > Employees Subfolders
+        (comma separated) inside this employee's folder.  Existing ones are
+        left alone, so running this again never duplicates anything."""
+        self.ensure_one()
+        names = company._get_documents_hr_subfolder_list()
+        if not names:
+            return self.env['documents.folder']
+        Folder = self.env['documents.folder'].sudo()
+        existing = {
+            (child.name or '').strip().lower()
+            for child in Folder.search([
+                ('parent_folder_id', '=', employee_folder.id),
+                ('active', '=', True),
+            ])
+        }
+        created = Folder
+        for name in names:
+            if name.lower() in existing:
+                continue
+            existing.add(name.lower())
+            created |= Folder.create({
+                'name': name,
+                'folder_type': 'custom',
+                'parent_folder_id': employee_folder.id,
+                'employee_id': self.id,
+                'company_id': company.id,
+            })
+        return created
 
     def _ensure_documents_hr_contract_folder(self, employee_folder, company):
         """Create the Contracts child shown inside every employee folder."""
@@ -195,7 +231,15 @@ class HrEmployee(models.Model):
 
     def action_view_documents(self):
         self.ensure_one()
-        folder = self._get_documents_hr_folder(create=True)
+        # Employees with only "Documents: Basic" (and no HR rights) open
+        # their OWN documents here; everybody else needs the Documents
+        # Administrator group.  The folder lookup runs as sudo because such
+        # employees cannot write on hr.employee / read other folders.
+        employee = self.sudo()
+        if employee.user_id != self.env.user and not self.env.user.has_group(
+                'custom_documents.group_documents_manager'):
+            raise AccessError(_("You can only open your own documents."))
+        folder = employee._get_documents_hr_folder(create=True)
         domain = [('folder_id', 'child_of', folder.id)] if folder else \
             [('res_model', '=', 'hr.employee'), ('res_id', '=', self.id)]
         return {

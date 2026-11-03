@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Documents (Community)',
-    'version': '19.0.0.10.0',
+    'version': '19.0.0.1.4',
     'category': 'Productivity/Documents',
     'summary': 'Document management, requests, drives and share links '
                 '- Community Edition equivalent of Odoo Enterprise Documents',
@@ -29,6 +29,7 @@ Odoo Enterprise "Documents" application, built to run on Community Edition:
             'custom_documents/static/src/js/documents_split_pdf_dialog.js',
             'custom_documents/static/src/js/documents_new_menu.js',
             'custom_documents/static/src/js/documents_kanban_controller.js',
+            'custom_documents/static/src/js/documents_sidebar_folder.js',
             'custom_documents/static/src/js/documents_kanban_renderer.js',
             'custom_documents/static/src/js/documents_kanban_view.js',
             'custom_documents/static/src/js/documents_list_controller.js',

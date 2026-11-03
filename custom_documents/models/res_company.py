@@ -34,6 +34,11 @@ class ResCompany(models.Model):
         string='Employees Subfolders', default=True,
         help='Automatically create a private subfolder for every employee '
              'inside the Employees Folder.')
+    documents_hr_subfolder_names = fields.Char(
+        string='Employees Subfolders (names)',
+        help='Comma-separated folder names created inside every employee '
+             'folder, e.g. "Customs, GST, Revenue".  The Contracts folder '
+             'is always created.')
     documents_hr_contract_tag_ids = fields.Many2many(
         'documents.tag', 'documents_company_hr_contract_tag_rel',
         'company_id', 'tag_id', string='Contracts',
@@ -94,3 +99,28 @@ class ResCompany(models.Model):
         Folder = self.env['documents.folder']
         for company in self:
             company.document_company_folder_id = Folder._get_or_create_company_drive(company)
+
+    # -- Employees Subfolders -----------------------------------------
+    def _get_documents_hr_subfolder_list(self):
+        """Names typed in Settings > Employees Subfolders: comma (or
+        semicolon / newline) separated, trimmed, without duplicates."""
+        self.ensure_one()
+        raw = self.documents_hr_subfolder_names or ''
+        names, seen = [], set()
+        for part in raw.replace(';', ',').replace('\n', ',').split(','):
+            name = part.strip()
+            if name and name.lower() not in seen:
+                seen.add(name.lower())
+                names.append(name)
+        return names
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'documents_hr_subfolder_names' in vals:
+            # Create the newly listed folders for the employees that
+            # already exist (new employees get them when created).
+            Employee = self.env['hr.employee'].sudo()
+            for company in self:
+                for employee in Employee.search([('company_id', '=', company.id)]):
+                    employee._get_documents_hr_folder(create=True)
+        return result

@@ -1,9 +1,10 @@
 /** @odoo-module **/
 
-import { onWillStart, useState } from "@odoo/owl";
+import { onWillStart, onWillUpdateProps, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { ListRenderer } from "@web/views/list/list_renderer";
 import { _t } from "@web/core/l10n/translation";
+import { getSidebarFolderId } from "./documents_sidebar_folder";
 
 export class DocumentsListRenderer extends ListRenderer {
     static template = "custom_documents.DocumentsListRenderer";
@@ -21,10 +22,23 @@ export class DocumentsListRenderer extends ListRenderer {
         onWillStart(async () => {
             await this.loadDocumentFolders();
         });
+        // Keep the folder cards in sync with the sidebar tree selection.
+        onWillUpdateProps(async () => {
+            await this.loadDocumentFolders();
+        });
     }
 
     get documentsContext() {
         return this.env.searchModel?.globalContext || {};
+    }
+
+    /** Folder picked in the sidebar tree, else the one the action opened. */
+    get activeFolderId() {
+        return (
+            getSidebarFolderId(this.env.searchModel) ||
+            this.documentsContext.documents_folder_id ||
+            false
+        );
     }
 
     get showFolderBrowser() {
@@ -32,7 +46,7 @@ export class DocumentsListRenderer extends ListRenderer {
             this.documentsContext.documents_sidebar_category || "all";
         return (
             ["all", "company"].includes(category) ||
-            !!this.documentsContext.documents_folder_id
+            !!this.activeFolderId
         );
     }
 
@@ -49,7 +63,7 @@ export class DocumentsListRenderer extends ListRenderer {
                 "get_documents_view_folders",
                 [
                     this.documentsContext.documents_sidebar_category || "all",
-                    this.documentsContext.documents_folder_id || false,
+                    this.activeFolderId,
                 ],
             );
         } catch (error) {
@@ -86,6 +100,48 @@ export class DocumentsListRenderer extends ListRenderer {
         return this.folderSelection.ids.has(folder.id);
     }
 
+    // --- Select all: the header checkbox covers folders AND files ---
+
+    get displayedFolders() {
+        return this.props.list.isGrouped ? [] : this.documentFolders;
+    }
+
+    get selectAll() {
+        const list = this.props.list;
+        if (list.isDomainSelected) {
+            return true;
+        }
+        const folders = this.displayedFolders;
+        const nbRecords = list.records.length;
+        if (!nbRecords && !folders.length) {
+            return false;
+        }
+        const allRecords = list.selection.length === nbRecords;
+        const allFolders = folders.every((folder) => this.isFolderSelected(folder));
+        return allRecords && allFolders;
+    }
+
+    toggleSelection() {
+        if (!this.canSelectRecord) {
+            return;
+        }
+        const list = this.props.list;
+        const selectAll = !this.selectAll;
+        const allRecordsSelected = list.selection.length === list.records.length;
+        // list.toggleSelection() flips between "all" and "none" for files.
+        if (list.records.length && allRecordsSelected !== selectAll) {
+            list.toggleSelection();
+        }
+        const ids = this.folderSelection.ids;
+        for (const folder of this.displayedFolders) {
+            if (selectAll) {
+                ids.add(folder.id);
+            } else {
+                ids.delete(folder.id);
+            }
+        }
+    }
+
     // --- Opening folders ---
 
     async openDocumentFolder(folder) {
@@ -107,9 +163,8 @@ export class DocumentsListRenderer extends ListRenderer {
                 action.view_mode = "kanban,list,form";
             }
 
-            await this.action.doAction(action, {
-                clearBreadcrumbs: true,
-            });
+            // Keep the breadcrumb trail so the user can go back.
+            await this.action.doAction(action);
         } catch (error) {
             this.notification.add(_t("The folder could not be opened."), {
                 type: "danger",

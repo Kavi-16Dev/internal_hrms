@@ -288,7 +288,7 @@
                      exactly like the folder tree on the left of Odoo's Documents app. -->
                 <searchpanel>
                     <field name="folder_id" string="Workspaces" icon="fa-folder-o"
-                           enable_counters="1" hierarchize="1"/>
+                           enable_counters="1" hierarchize="1" expand="1"/>
                     <field name="tag_ids" string="Tags" icon="fa-tags"
                            select="multi" enable_counters="1"/>
                 </searchpanel>

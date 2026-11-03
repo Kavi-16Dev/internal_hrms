@@ -47,6 +47,9 @@ class ResConfigSettings(models.TransientModel):
     documents_hr_folder_id = fields.Many2one(
         related='company_id.documents_hr_folder_id', readonly=False,
         string='Employees Folder')
+    documents_hr_subfolder_names = fields.Char(
+        related='company_id.documents_hr_subfolder_names', readonly=False,
+        string='Employees Subfolders')
     documents_hr_subfolders = fields.Boolean(
         related='company_id.documents_hr_subfolders', readonly=False,
         string='Employees Subfolders')

@@ -35,10 +35,6 @@
     <menuitem id="menu_documents_settings" name="Settings" parent="menu_documents_config"
               action="documents_config_settings_action" sequence="10"/>
 
-    <menuitem id="menu_documents_spreadsheet_templates" name="Spreadsheet Templates"
-              parent="menu_documents_config"
-              action="documents_document_action_spreadsheet_templates" sequence="20"/>
-
     <!-- Structure (section header, no action, like the reference screenshot) -->
     <menuitem id="menu_documents_structure" name="Structure" parent="menu_documents_config"
               sequence="30"/>

@@ -85,8 +85,9 @@
                                     <field name="documents_hr_folder_id"/>
                                 </div>
                                 <div class="mt8">
-                                    <label for="documents_hr_subfolders" string="Employees Subfolders"/>
-                                    <field name="documents_hr_subfolders"/>
+                                    <label for="documents_hr_subfolder_names" string="Employees Subfolders"/>
+                                    <field name="documents_hr_subfolder_names"
+                                           placeholder="e.g. Customs, GST, Revenue"/>
                                 </div>
                                 <div class="mt8">
                                     <span class="o_form_label">Default tags</span>
@@ -148,10 +149,6 @@
                         <setting string="Default Request Deadline (days)"
                                  help="Default number of days given to fulfil a document request.">
                             <field name="documents_request_default_deadline"/>
-                        </setting>
-                        <setting string="Spreadsheet Templates Workspace"
-                                 help="Workspace browsed by default from Configuration &gt; Spreadsheet Templates.">
-                            <field name="documents_spreadsheet_folder_id"/>
                         </setting>
                     </block>
 

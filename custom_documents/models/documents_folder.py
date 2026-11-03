@@ -303,6 +303,9 @@ class DocumentsFolder(models.Model):
             ], order="sequence, name, id")
         elif category == "company":
             company_drive = self._get_or_create_company_drive(self.env.company)
+            # The Inbox is created lazily; make sure it exists so it is
+            # always listed inside the Company Drive.
+            self._get_or_create_company_inbox(self.env.company)
             folders = Folder.search([
                 ("parent_folder_id", "=", company_drive.id),
                 ("active", "=", True),
@@ -310,9 +313,18 @@ class DocumentsFolder(models.Model):
         elif category == "all":
             # The All browser shows custom workspaces across the company tree
             # but does not show the invisible/root drive records themselves.
+            self._get_or_create_company_inbox(self.env.company)
+            # Folders shared with the user (for example somebody's employee
+            # folder) are listed too, even though they are not "custom".
             folders = Folder.search([
                 ("active", "=", True),
+                "|",
                 ("folder_type", "=", "custom"),
+                "&",
+                ("folder_type", "!=", "company"),
+                "|",
+                ("shared_user_ids", "in", [self.env.uid]),
+                ("effective_access_internal", "in", ["viewer", "editor"]),
             ], order="sequence, name, id")
         elif category == "shared_with_me":
             # Folders somebody else shared with the current user, either
@@ -333,21 +345,36 @@ class DocumentsFolder(models.Model):
         else:
             return []
 
-        return [{
+        result = []
+        for folder in folders:
+            # A shared folder's parent is usually NOT readable by the person
+            # it was shared with.  Reading ``parent.name`` would then raise
+            # an AccessError and the whole browser would fail to load, so
+            # only expose the parent when the user may read it.
+            parent = folder.parent_folder_id
+            if parent and not parent.has_access("read"):
+                parent = Folder
+            result.append(self._folder_card_values(folder, parent))
+        return result
+
+    def _folder_card_values(self, folder, parent):
+        return {
             "id": folder.id,
             "name": folder.name,
-            "parent_id": folder.parent_folder_id.id or False,
-            "parent_name": folder.parent_folder_id.name or False,
+            "parent_id": parent.id or False,
+            "parent_name": parent.name or False,
             "folder_type": folder.folder_type,
             "document_count": folder.document_count,
             "color": folder.color,
             "can_share": folder._can_manage_access(),
-        } for folder in folders]
+        }
 
     def action_open_documents(self):
         self.ensure_one()
         category = 'all'
-        root = self
+        # Walk up with sudo: the ancestors of a shared folder are often not
+        # readable by the person it was shared with.
+        root = self.sudo()
         while root.parent_folder_id:
             root = root.parent_folder_id
         if root.folder_type == 'company':

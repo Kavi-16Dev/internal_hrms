@@ -18,9 +18,6 @@
                     <DropdownItem onSelected="() => documentsNew.openLinkDialog()">
                         <i class="fa fa-fw fa-link me-2"/>Link
                     </DropdownItem>
-                    <DropdownItem onSelected="() => documentsNew.openSpreadsheet()">
-                        <i class="fa fa-fw fa-table me-2"/>Spreadsheet
-                    </DropdownItem>
                     <div role="separator" class="dropdown-divider"/>
                     <DropdownItem onSelected="() => documentsNew.openNewFolderDialog()">
                         <i class="fa fa-fw fa-folder-o me-2"/>Folder

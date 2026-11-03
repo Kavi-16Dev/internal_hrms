@@ -57,14 +57,6 @@ const DOCUMENTS_CATEGORIES = [
         actionXmlId: "custom_documents.documents_document_action_requests",
     },
     {
-        id: "inbox",
-        get label() {
-            return _t("Inbox");
-        },
-        icon: "fa-inbox",
-        actionXmlId: "custom_documents.documents_document_action_inbox",
-    },
-    {
         id: "recent",
         get label() {
             return _t("Recent");

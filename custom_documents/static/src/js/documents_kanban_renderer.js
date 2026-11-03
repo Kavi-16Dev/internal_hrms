@@ -1,9 +1,10 @@
 /** @odoo-module **/
 
-import { onWillStart, useRef, useState } from "@odoo/owl";
+import { onWillStart, onWillUpdateProps, useRef, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { KanbanRenderer } from "@web/views/kanban/kanban_renderer";
 import { _t } from "@web/core/l10n/translation";
+import { getSidebarFolderId } from "./documents_sidebar_folder";
 import { DocumentsShareDialog } from "./documents_share_dialog";
 
 function fileToBase64(file) {
@@ -39,17 +40,30 @@ export class DocumentsKanbanRenderer extends KanbanRenderer {
         onWillStart(async () => {
             await this.loadDocumentFolders();
         });
+        // Keep the folder cards in sync with the sidebar tree selection.
+        onWillUpdateProps(async () => {
+            await this.loadDocumentFolders();
+        });
     }
 
     get documentsContext() {
         return this.env.searchModel?.globalContext || {};
     }
 
+    /** Folder picked in the sidebar tree, else the one the action opened. */
+    get activeFolderId() {
+        return (
+            getSidebarFolderId(this.env.searchModel) ||
+            this.documentsContext.documents_folder_id ||
+            false
+        );
+    }
+
     get showFolderBrowser() {
         const category = this.documentsContext.documents_sidebar_category || "all";
         return (
             ["all", "company", "shared_with_me"].includes(category) ||
-            !!this.documentsContext.documents_folder_id
+            !!this.activeFolderId
         );
     }
 
@@ -80,7 +94,7 @@ export class DocumentsKanbanRenderer extends KanbanRenderer {
         }
 
         try {
-            const currentFolderId = this.documentsContext.documents_folder_id || false;
+            const currentFolderId = this.activeFolderId;
             this.folderState.current = currentFolderId
                 ? await this.orm.call("documents.folder", "get_folder_share_state", [
                       currentFolderId,
@@ -172,7 +186,9 @@ export class DocumentsKanbanRenderer extends KanbanRenderer {
             if (action && !action.view_mode) {
                 action.view_mode = "kanban,list,form";
             }
-            await this.action.doAction(action, { clearBreadcrumbs: true });
+            // Keep the breadcrumb trail (Company / Employees / ...) so the
+            // user can see where they are and go back to the previous folder.
+            await this.action.doAction(action);
         } catch (error) {
             this.notification.add(_t("The folder could not be opened."), {
                 type: "danger",
