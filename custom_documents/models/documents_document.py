@@ -17,6 +17,10 @@ class DocumentsDocument(models.Model):
 
     name = fields.Char(required=True, tracking=True)
     active = fields.Boolean(default=True)
+    trash_date = fields.Datetime(
+        string='Moved to Trash on', copy=False, readonly=True,
+        help='When the document was archived / moved to the Trash.  The '
+             'Trash Deletion delay is counted from this moment.')
     deletion_date = fields.Date(
         string='Deletion Date', copy=False,
         help='Date on which this document will be permanently deleted from '
@@ -315,6 +319,15 @@ class DocumentsDocument(models.Model):
             vals.pop('shared_user_ids', None)
 
         old_employee_ids = self.mapped('employee_id').ids
+
+        # Whatever path archives / restores a document (button, list action,
+        # code), keep the Trash timestamp right so the purge can rely on it.
+        if 'active' in vals:
+            vals = dict(vals)
+            if vals['active']:
+                vals.update(trash_date=False, deletion_date=False)
+            else:
+                vals['trash_date'] = fields.Datetime.now()
 
         if vals.get('datas'):
             for document in self:
@@ -769,7 +782,7 @@ class DocumentsDocument(models.Model):
         schedule their permanent deletion according to each company's
         'Deletion delay' setting (Settings > Documents > Trash Management)."""
         for document in self:
-            delay = document.company_id.documents_deletion_delay or 30
+            delay = (document.company_id or self.env.company).documents_deletion_delay
             document.deletion_date = fields.Date.context_today(document) + timedelta(days=delay)
         return super().action_archive()
 
@@ -792,15 +805,29 @@ class DocumentsDocument(models.Model):
 
     @api.model
     def _cron_purge_trash(self):
-        """Scheduled action: permanently delete every document whose
-        deletion_date (Trash > Deletion Delay) has passed."""
-        today = fields.Date.context_today(self)
-        expired = self.with_context(active_test=False).search([
+        """Scheduled action: permanently delete the Trash items older than
+        the company's Deletion delay (Settings > Documents > Trash
+        Management).
+
+        The age is counted from the moment the document was moved to the
+        Trash (``trash_date``; older items without it fall back to their
+        last modification) and uses the delay CURRENTLY configured, so
+        changing the setting also applies to items already in the Trash."""
+        now = fields.Datetime.now()
+        trashed = self.with_context(active_test=False).search([
             ('active', '=', False),
-            ('deletion_date', '!=', False),
-            ('deletion_date', '<=', today),
         ])
+        expired = self.browse()
+        for document in trashed:
+            company = document.company_id or self.env.company
+            delay = company.documents_deletion_delay
+            if delay is None or delay < 0:
+                continue
+            moved = document.trash_date or document.write_date or document.create_date
+            if moved and moved + timedelta(days=delay) <= now:
+                expired |= document
         expired.action_delete_permanently()
+        return len(expired)
 
     # ------------------------------------------------------------------
     # "Shared with me" (Documents > Shared with me)

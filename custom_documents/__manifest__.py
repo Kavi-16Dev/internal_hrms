@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Documents (Community)',
-    'version': '19.0.0.1.4',
+    'version': '19.0.0.1.6',
     'category': 'Productivity/Documents',
-    'summary': 'Document management, requests, drives and share links '
+    'summary': 'Document management, requests, drives and share links'
                 '- Community Edition equivalent of Odoo Enterprise Documents',
     'description': """
 Documents for Odoo Community

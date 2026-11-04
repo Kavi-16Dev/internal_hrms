@@ -115,12 +115,58 @@ class ResCompany(models.Model):
         return names
 
     def write(self, vals):
+        track = 'documents_hr_subfolder_names' in vals
+        old_names = {c.id: c._get_documents_hr_subfolder_list() for c in self} if track else {}
         result = super().write(vals)
-        if 'documents_hr_subfolder_names' in vals:
-            # Create the newly listed folders for the employees that
-            # already exist (new employees get them when created).
+        if track:
             Employee = self.env['hr.employee'].sudo()
             for company in self:
+                # First turn "Payslip" -> "Payslip's" into a rename of the
+                # existing folders, so no duplicates are left behind...
+                company._rename_documents_hr_subfolders(
+                    old_names.get(company.id, []),
+                    company._get_documents_hr_subfolder_list())
+                # ...then create whatever is still missing (new names).
                 for employee in Employee.search([('company_id', '=', company.id)]):
                     employee._get_documents_hr_folder(create=True)
         return result
+
+    def _rename_documents_hr_subfolders(self, old_names, new_names):
+        """Rename existing employee sub-folders when a name in the setting
+        was edited (matched by position in the list).
+
+        A name is only treated as a rename when the old one disappeared
+        from the list and the new one did not exist before; so reordering
+        or adding names never renames anything.  Folders of names that
+        were removed are left untouched (they may hold files)."""
+        self.ensure_one()
+        old_lower = {n.lower() for n in old_names}
+        new_lower = {n.lower() for n in new_names}
+        renames = {}
+        for old, new in zip(old_names, new_names):
+            if old.lower() != new.lower() \
+                    and old.lower() not in new_lower \
+                    and new.lower() not in old_lower:
+                renames[old.lower()] = new
+            elif old != new and old.lower() == new.lower():
+                renames[old.lower()] = new  # only the case changed
+        if not renames:
+            return
+        Folder = self.env['documents.folder'].sudo()
+        roots = Folder.search([
+            ('is_employee_root', '=', True),
+            ('company_id', '=', self.id),
+        ])
+        for root in roots:
+            children = Folder.search([
+                ('parent_folder_id', '=', root.id),
+                ('active', '=', True),
+            ])
+            taken = {(c.name or '').strip().lower() for c in children}
+            for child in children:
+                key = (child.name or '').strip().lower()
+                new = renames.get(key)
+                if new and (new.lower() not in taken or new.lower() == key):
+                    taken.discard(key)
+                    taken.add(new.lower())
+                    child.write({'name': new})
