@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import io
+import logging
 import os
 import re
 from datetime import timedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 
 class DocumentsDocument(models.Model):
@@ -796,12 +799,29 @@ class DocumentsDocument(models.Model):
         return self.action_unarchive()
 
     def action_delete_permanently(self):
-        """Permanently remove the document(s) and their attachment right
-        away, without waiting for the Deletion Delay / cron to run."""
-        for document in self:
-            if document.attachment_id:
-                document.attachment_id.unlink()
-        return self.unlink()
+        """Permanently remove the document(s) and their file right away,
+        without waiting for the Deletion Delay / cron to run.
+
+        The documents are deleted first and the files afterwards: the
+        ``attachment_id`` foreign key is ``ondelete='cascade'``, so deleting
+        the attachment first removed the documents behind the ORM's back and
+        made the following ``unlink()`` fail (which silently broke the
+        purge).  A file still used by another document (e.g. the original of
+        a shortcut) is never deleted."""
+        documents = self.with_context(active_test=False).exists()
+        if not documents:
+            return True
+        # Shortcuts never own their file.
+        attachments = documents.sudo().filtered(
+            lambda d: not d.shortcut_document_id).mapped('attachment_id')
+        attachments |= documents.sudo().mapped('version_ids.attachment_id')
+        result = documents.unlink()
+        if attachments:
+            attachments = attachments.sudo().exists()
+            still_used = self.sudo().with_context(active_test=False).search(
+                [('attachment_id', 'in', attachments.ids)]).mapped('attachment_id')
+            (attachments - still_used).unlink()
+        return result
 
     @api.model
     def _cron_purge_trash(self):
@@ -812,12 +832,17 @@ class DocumentsDocument(models.Model):
         The age is counted from the moment the document was moved to the
         Trash (``trash_date``; older items without it fall back to their
         last modification) and uses the delay CURRENTLY configured, so
-        changing the setting also applies to items already in the Trash."""
+        changing the setting also applies to items already in the Trash.
+        One failing document is logged and skipped; it no longer blocks
+        the others."""
+        self = self.sudo()
         now = fields.Datetime.now()
         trashed = self.with_context(active_test=False).search([
             ('active', '=', False),
         ])
-        expired = self.browse()
+        # 1) Decide what is expired BEFORE deleting anything, so no deleted
+        #    record is ever read afterwards.
+        expired_ids = []
         for document in trashed:
             company = document.company_id or self.env.company
             delay = company.documents_deletion_delay
@@ -825,9 +850,23 @@ class DocumentsDocument(models.Model):
                 continue
             moved = document.trash_date or document.write_date or document.create_date
             if moved and moved + timedelta(days=delay) <= now:
-                expired |= document
-        expired.action_delete_permanently()
-        return len(expired)
+                expired_ids.append(document.id)
+
+        # 2) Delete them one by one.  Deleting a document also deletes its
+        #    shortcuts at database level, so a later id may already be gone.
+        deleted = 0
+        for document_id in expired_ids:
+            document = self.with_context(active_test=False).browse(document_id).exists()
+            if not document:
+                continue
+            try:
+                with self.env.cr.savepoint():
+                    document.action_delete_permanently()
+                deleted += 1
+            except Exception:
+                _logger.exception(
+                    'Documents: could not purge trashed document %s', document_id)
+        return deleted
 
     # ------------------------------------------------------------------
     # "Shared with me" (Documents > Shared with me)

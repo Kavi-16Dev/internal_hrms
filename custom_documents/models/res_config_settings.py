@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import api, fields, models
+
+_logger = logging.getLogger(__name__)
 
 
 class ResConfigSettings(models.TransientModel):
@@ -147,3 +151,15 @@ class ResConfigSettings(models.TransientModel):
             if action:
                 return action.sudo().read()[0]
         return {'type': 'ir.actions.act_window_close'}
+
+    def set_values(self):
+        res = super().set_values()
+        # Apply the (new) Deletion delay right away instead of waiting for
+        # the daily scheduled action: expired Trash items are purged on save.
+        # A purge problem must never prevent the settings from being saved.
+        try:
+            with self.env.cr.savepoint():
+                self.env['documents.document'].sudo()._cron_purge_trash()
+        except Exception:
+            _logger.exception('Documents: Trash purge after saving settings failed')
+        return res
