@@ -22,3 +22,5 @@ access_res_config_settings_documents_manager,res.config.settings.documents.manag
 access_mail_activity_type_documents_manager,mail.activity.type.documents.manager,mail.model_mail_activity_type,group_documents_manager,1,1,1,1
 access_mail_activity_plan_documents_manager,mail.activity.plan.documents.manager,mail.model_mail_activity_plan,group_documents_manager,1,1,1,1
 access_mail_activity_plan_template_documents_manager,mail.activity.plan.template.documents.manager,mail.model_mail_activity_plan_template,group_documents_manager,1,1,1,1
+access_documents_group_user,documents.group.user,model_documents_group,group_documents_user,1,0,0,0
+access_documents_group_manager,documents.group.manager,model_documents_group,group_documents_manager,1,1,1,1

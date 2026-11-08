@@ -44,6 +44,7 @@ class DocumentsDocument(models.Model):
     type = fields.Selection([
         ('binary', 'File'),
         ('url', 'Link'),
+        ('folder', 'Folder Shortcut'),
     ], default='binary', required=True)
 
     # -- Classification -------------------------------------------------
@@ -139,6 +140,14 @@ class DocumentsDocument(models.Model):
     lock_uid = fields.Many2one(
         'res.users', string='Locked By', copy=False, tracking=True)
 
+    # -- Starred (favorites, per user) ------------------------------
+    favorite_user_ids = fields.Many2many(
+        'res.users', 'documents_document_favorite_rel', 'document_id', 'user_id',
+        string='Starred By', copy=False)
+    is_favorited = fields.Boolean(
+        string='Starred', compute='_compute_is_favorited',
+        inverse='_inverse_is_favorited', search='_search_is_favorited')
+
     # -- Shortcuts -------------------------------------------------
     # A "shortcut" is a lightweight documents.document that points at the
     # same attachment as another document but lives in a different
@@ -150,6 +159,11 @@ class DocumentsDocument(models.Model):
         copy=False, index=True,
         help='If set, this document is a shortcut pointing at another '
              'document rather than owning its own file.')
+    # A shortcut to a WORKSPACE (folder): shows up as an entry in the
+    # destination workspace and opens the target workspace when clicked.
+    shortcut_folder_id = fields.Many2one(
+        'documents.folder', string='Shortcut To Workspace', ondelete='cascade',
+        copy=False, index=True)
     is_shortcut = fields.Boolean(
         string='Is a Shortcut', compute='_compute_is_shortcut', store=True)
 
@@ -191,10 +205,11 @@ class DocumentsDocument(models.Model):
                     name = record.display_name
             doc.res_name = name
 
-    @api.depends('shortcut_document_id')
+    @api.depends('shortcut_document_id', 'shortcut_folder_id')
     def _compute_is_shortcut(self):
         for document in self:
-            document.is_shortcut = bool(document.shortcut_document_id)
+            document.is_shortcut = bool(
+                document.shortcut_document_id or document.shortcut_folder_id)
 
     @api.depends('version_ids')
     def _compute_version_count(self):
@@ -362,13 +377,18 @@ class DocumentsDocument(models.Model):
         self.ensure_one()
         if not self.attachment_id:
             return
+        attachment = self.attachment_id.sudo()
         self.env['documents.document.version'].sudo().create({
             'document_id': self.id,
-            'attachment_id': self.attachment_id.copy({
+            'attachment_id': attachment.copy({
                 'res_model': False,
                 'res_id': False,
                 'res_field': False,
             }).id,
+            # The date / author of the file being archived, i.e. when it
+            # became the current file - not the time it is replaced.
+            'version_date': attachment.write_date or attachment.create_date,
+            'version_user_id': (attachment.write_uid or attachment.create_uid).id,
         })
 
     def _create_attachment_from_datas(self, datas, name):
@@ -492,7 +512,13 @@ class DocumentsDocument(models.Model):
         folder = self.env['documents.folder'].browse(folder_id).exists()
         if not folder:
             raise UserError(_('Please select a destination workspace.'))
-        self.folder_id = folder.id
+        # The document takes the access settings of its new workspace
+        # (this is what the "Moving to" confirmation announces).
+        self.write({
+            'folder_id': folder.id,
+            'access_internal': 'none',
+            'access_via_link': 'none',
+        })
 
     def action_create_shortcut(self, folder_id):
         """'Create Shortcut' Actions-menu entry: a new document that shares
@@ -512,6 +538,133 @@ class DocumentsDocument(models.Model):
             'shortcut_document_id': self.id,
         })
         return shortcut
+
+    @api.depends_context('uid')
+    @api.depends('favorite_user_ids')
+    def _compute_is_favorited(self):
+        user = self.env.user
+        for document in self:
+            document.is_favorited = user in document.sudo().favorite_user_ids
+
+    def _inverse_is_favorited(self):
+        for document in self:
+            document._set_favorite(document.is_favorited)
+
+    def _search_is_favorited(self, operator, value):
+        if operator not in ('=', '!='):
+            raise UserError(_('Unsupported search operator on Starred.'))
+        starred = (operator == '=') == bool(value)
+        return [('favorite_user_ids', 'in' if starred else 'not in', [self.env.uid])]
+
+    def _set_favorite(self, starred):
+        """Star / un-star for the current user.  Written from the user side
+        so that starring a file you can only read works and does not change
+        the document's 'Last Updated on'."""
+        self.ensure_one()
+        command = 4 if starred else 3
+        self.env.user.sudo().write({'documents_favorite_ids': [(command, self.id)]})
+
+    def action_toggle_favorite(self):
+        """'Add star' / 'Remove star' Actions-menu entry."""
+        self.ensure_one()
+        starred = self.env.user in self.sudo().favorite_user_ids
+        self._set_favorite(not starred)
+        return not starred
+
+    # ------------------------------------------------------------------
+    # Manage Versions (Actions menu): current file, history, upload, delete
+    # ------------------------------------------------------------------
+    def _check_version_edit_allowed(self):
+        self.ensure_one()
+        is_manager = self.env.user.has_group('custom_documents.group_documents_manager')
+        if self.lock_uid and self.lock_uid != self.env.user and not is_manager:
+            raise UserError(_('This document is locked by %s.', self.lock_uid.name))
+
+    def get_version_history(self):
+        """Data of the Manage Versions dialog: the current file and the
+        previous versions (newest first)."""
+        self.ensure_one()
+        self.check_access('read')
+        document = self.sudo()
+        attachment = document.attachment_id
+        versions = document.version_ids.sorted(
+            key=lambda v: (v.version_date or v.create_date, v.id), reverse=True)
+
+        def user_name(user):
+            return user.name if user else ''
+
+        current = False
+        if attachment:
+            current = {
+                'attachment_id': attachment.id,
+                'name': attachment.name,
+                'mimetype': attachment.mimetype or '',
+                'file_size': attachment.file_size,
+                'date': fields.Datetime.to_string(
+                    attachment.write_date or attachment.create_date),
+                'user': user_name(attachment.write_uid or attachment.create_uid),
+                # Deleting the current file puts the latest previous one back.
+                'can_delete': bool(versions),
+            }
+        return {
+            'document_name': document.name,
+            'is_locked_by_other': bool(
+                document.lock_uid and document.lock_uid != self.env.user),
+            'current': current,
+            'versions': [{
+                'id': version.id,
+                'attachment_id': version.attachment_id.id,
+                'name': version.attachment_id.name,
+                'mimetype': version.attachment_id.mimetype or '',
+                'file_size': version.attachment_id.file_size,
+                'date': fields.Datetime.to_string(version.version_date or version.create_date),
+                'user': user_name(version.version_user_id or version.create_uid),
+            } for version in versions],
+        }
+
+    def action_upload_new_version(self, datas, filename=False, mimetype=False):
+        """'Upload New Version' button of Manage Versions: the uploaded file
+        becomes the document's file; the file it replaces is kept as a
+        previous version."""
+        self.ensure_one()
+        self.check_access('write')
+        self._check_version_edit_allowed()
+        if not datas:
+            raise UserError(_('Please select a file.'))
+        if not self.attachment_id:
+            raise UserError(_('This document has no file yet.'))
+        self._snapshot_version()
+        vals = {'datas': datas}
+        if filename:
+            vals['name'] = filename
+        if mimetype:
+            vals['mimetype'] = mimetype
+        self.attachment_id.write(vals)
+        self.message_post(body=_(
+            'New version uploaded: %s', filename or self.attachment_id.name))
+        return True
+
+    def action_delete_current_version(self):
+        """'Delete' on the current version: the most recent previous version
+        becomes the current file again."""
+        self.ensure_one()
+        self.check_access('write')
+        self._check_version_edit_allowed()
+        latest = self.sudo().version_ids.sorted(
+            key=lambda v: (v.version_date or v.create_date, v.id), reverse=True)[:1]
+        if not latest:
+            raise UserError(_(
+                'The only version of a file cannot be deleted. '
+                'Move the document to the Trash instead.'))
+        snapshot = latest.attachment_id
+        self.attachment_id.write({
+            'datas': snapshot.datas,
+            'name': snapshot.name,
+            'mimetype': snapshot.mimetype,
+        })
+        latest.unlink()
+        snapshot.sudo().unlink()
+        return True
 
     def action_toggle_lock(self):
         """'Lock' / 'Unlock' Actions-menu entry."""

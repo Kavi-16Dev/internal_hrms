@@ -17,6 +17,13 @@ class DocumentsDocumentVersion(models.Model):
         ondelete='cascade')
     name = fields.Char(related='attachment_id.name', string='File Name')
     file_size = fields.Integer(related='attachment_id.file_size', string='Size')
+    version_date = fields.Datetime(
+        string='Version Date',
+        help='When this file became the document\'s file (not when it was '
+             'replaced).')
+    version_user_id = fields.Many2one(
+        'res.users', string='Uploaded By',
+        help='Who put this file on the document.')
 
     def action_restore(self):
         """'Restore' button of the Manage Versions dialog: put this
@@ -33,4 +40,16 @@ class DocumentsDocumentVersion(models.Model):
             })
         else:
             raise UserError(_('This document no longer has a file to restore onto.'))
+        return True
+
+    def action_delete_version(self):
+        """'Delete' button of a previous version in Manage Versions: remove
+        the snapshot and its file."""
+        self.ensure_one()
+        document = self.document_id
+        document.check_access('write')
+        document._check_version_edit_allowed()
+        attachment = self.attachment_id
+        self.sudo().unlink()
+        attachment.sudo().unlink()
         return True

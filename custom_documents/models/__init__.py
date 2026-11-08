@@ -1,5 +1,6 @@
 from . import documents_tag_category
 from . import documents_tag
+from . import documents_group
 from . import documents_folder
 from . import documents_document
 from . import documents_document_version

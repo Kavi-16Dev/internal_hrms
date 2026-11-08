@@ -45,7 +45,8 @@ export class DocumentsListRenderer extends ListRenderer {
         const category =
             this.documentsContext.documents_sidebar_category || "all";
         return (
-            ["all", "company"].includes(category) ||
+            // Same categories as the kanban view, so both show the same folders.
+            ["all", "company", "shared_with_me"].includes(category) ||
             !!this.activeFolderId
         );
     }
@@ -79,6 +80,14 @@ export class DocumentsListRenderer extends ListRenderer {
 
     get documentFolders() {
         return this.folderState.folders;
+    }
+
+    /**
+     * No "No documents" helper while folders are listed: the list is not
+     * empty, it just has no files yet.
+     */
+    get showNoContentHelper() {
+        return super.showNoContentHelper && !this.documentFolders.length;
     }
 
     // --- Folder selection: backed by state shared with the controller ---

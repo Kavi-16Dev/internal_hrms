@@ -39,7 +39,7 @@
         <field name="name">documents.document.kanban</field>
         <field name="model">documents.document</field>
         <field name="arch" type="xml">
-            <kanban class="o_documents_kanban" sample="1" js_class="documents_kanban">
+            <kanban class="o_documents_kanban" js_class="documents_kanban">
                 <field name="name"/>
                 <field name="mimetype"/>
                 <field name="state"/>
@@ -52,6 +52,8 @@
                 <field name="create_date"/>
                 <field name="show_create_applicant"/>
                 <field name="lock_uid"/>
+                <field name="is_favorited"/>
+                <field name="shortcut_folder_id"/>
                 <field name="activity_state"/>
                 <templates>
                     <t t-name="card">
@@ -124,11 +126,13 @@
         </field>
     </record>
 
+    <!-- The list has no sample="1": with no files in a folder Odoo swapped it
+         for faded fake rows, which also greyed out the folder rows. -->
     <record id="documents_document_view_list" model="ir.ui.view">
         <field name="name">documents.document.list</field>
         <field name="model">documents.document</field>
         <field name="arch" type="xml">
-            <list sample="1" js_class="documents_list">
+            <list js_class="documents_list">
                 <field name="active" column_invisible="1"/>
                 <field name="mimetype" column_invisible="1"/>
                 <field name="attachment_id" column_invisible="1"/>
@@ -136,6 +140,8 @@
                 <field name="type" column_invisible="1"/>
                 <field name="show_create_applicant" column_invisible="1"/>
                 <field name="lock_uid" column_invisible="1"/>
+                <field name="shortcut_folder_id" column_invisible="1"/>
+                <field name="is_favorited" widget="boolean_favorite" nolabel="1"/>
                 <field name="name"/>
                 <field name="folder_id"/>
                 <field name="owner_id" optional="show"/>
@@ -231,6 +237,7 @@
                             <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
                             <field name="lock_uid" readonly="1" invisible="not lock_uid"/>
                             <field name="shortcut_document_id" readonly="1" invisible="not is_shortcut"/>
+                            <field name="shortcut_folder_id" readonly="1" invisible="not shortcut_folder_id"/>
                         </group>
                         <group>
                             <field name="type"/>
@@ -287,8 +294,10 @@
                 <!-- Persistent left sidebar: click a workspace to drill into it,
                      exactly like the folder tree on the left of Odoo's Documents app. -->
                 <searchpanel>
-                    <field name="folder_id" string="Workspaces" icon="fa-folder-o"
-                           enable_counters="1" hierarchize="1" expand="1"/>
+                    <!-- The "Workspaces" section was removed: folders are
+                         listed as trees under the Company / My Drive /
+                         Shared with me / All menus instead (see
+                         DocumentsSearchPanel). -->
                     <field name="tag_ids" string="Tags" icon="fa-tags"
                            select="multi" enable_counters="1"/>
                 </searchpanel>

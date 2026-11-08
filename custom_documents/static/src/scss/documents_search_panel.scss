@@ -4,6 +4,18 @@
 // "Documents" top-menu dropdown.
 
 .o_documents_category_panel {
+    // The <li> is a Bootstrap list-group-item: its "active" state would paint
+    // the whole block (menu + folder tree) in the highlight colour.  Only the
+    // menu link / the open folder row are highlighted.
+    .o_documents_category_item.list-group-item,
+    .o_documents_category_item.list-group-item.active {
+        --bs-list-group-active-bg: transparent;
+        --bs-list-group-active-border-color: transparent;
+        --bs-list-group-active-color: inherit;
+        background-color: transparent;
+        color: inherit;
+    }
+
     .o_documents_category_link {
         color: var(--SearchPanel-value-text-color, inherit);
         font-weight: 500;
@@ -27,6 +39,49 @@
         .o_documents_category_icon {
             opacity: 1;
         }
+    }
+}
+
+// Folder trees listed under the Company / My Drive / Shared with me / All menus.
+.o_documents_category_panel {
+    .o_documents_tree_caret {
+        color: var(--SearchPanel-value-text-color, inherit);
+        opacity: 0.7;
+        width: 1.2rem;
+        text-align: center;
+        line-height: 1;
+    }
+
+    .o_documents_tree_caret_spacer {
+        display: inline-block;
+        width: 1.2rem;
+    }
+
+    .o_documents_tree {
+        margin-left: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .o_documents_tree_row {
+        font-size: 0.95rem;
+
+        &:hover {
+            background-color: var(--SearchPanel-value-hover-bg, rgba(0, 0, 0, 0.04));
+        }
+
+        &.active {
+            background-color: var(--SearchPanel-value-selected-bg, #e7e9fc);
+
+            .o_documents_tree_link {
+                color: var(--SearchPanel-value-selected-text-color, var(--o-brand-odoo, #714b67));
+                font-weight: 600;
+            }
+        }
+    }
+
+    .o_documents_tree_link {
+        color: var(--SearchPanel-value-text-color, inherit);
+        min-width: 0;
     }
 }
 
@@ -128,5 +183,40 @@
 @media (max-width: 768px) {
     .o_documents_folder_grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* "Create Shortcut" dialog: destination tree. */
+.o_documents_shortcut_dialog {
+    .o_documents_shortcut_tree {
+        max-height: 45vh;
+        overflow-y: auto;
+        border: 1px solid rgba(128, 128, 128, 0.25);
+        border-radius: 0.375rem;
+        padding: 0.25rem;
+    }
+
+    .o_documents_shortcut_caret {
+        display: inline-block;
+        width: 1.2rem;
+        text-align: center;
+        line-height: 1;
+        opacity: 0.7;
+    }
+
+    .o_documents_shortcut_link {
+        color: inherit;
+        min-width: 0;
+    }
+
+    .o_documents_shortcut_row {
+        &:hover {
+            background-color: rgba(128, 128, 128, 0.12);
+        }
+
+        &.active {
+            background-color: rgba(113, 75, 103, 0.18);
+            font-weight: 600;
+        }
     }
 }

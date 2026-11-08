@@ -357,6 +357,73 @@ class DocumentsFolder(models.Model):
             result.append(self._folder_card_values(folder, parent))
         return result
 
+    @api.model
+    def get_sidebar_folder_tree(self):
+        """Folder trees shown under the menus of the Documents sidebar.
+
+        Returns ``{category: [node, ...]}`` for ``all`` (workspaces that are
+        not under the Company Drive nor a My Drive), ``company`` (inside the
+        Company Drive), ``my_drive`` (inside the user's own drive) and
+        ``shared_with_me``.  A node is ``{id, name, children: [node, ...]}``.
+        Everything goes through the normal access rules (no sudo), so a user
+        only ever gets the folders they may open.
+        """
+        Folder = self.env['documents.folder']
+        order = 'sequence, name, id'
+
+        def build(roots):
+            if not roots:
+                return []
+            tree = Folder.search([
+                ('id', 'child_of', roots.ids),
+                ('active', '=', True),
+                ('folder_type', '!=', 'employee'),
+            ], order=order)
+            by_parent = {}
+            for folder in tree:
+                by_parent.setdefault(folder.parent_folder_id.id, []).append(folder)
+
+            def node(folder, seen):
+                if folder.id in seen:  # safety net against corrupted data
+                    return None
+                seen = seen | {folder.id}
+                children = [node(child, seen) for child in by_parent.get(folder.id, [])]
+                return {
+                    'id': folder.id,
+                    'name': folder.name,
+                    'children': [child for child in children if child],
+                }
+
+            return [n for n in (node(root, frozenset()) for root in roots) if n]
+
+        company_drive = self._get_or_create_company_drive(self.env.company)
+        my_drive = self._get_or_create_employee_drive(self.env.user)
+        self._get_or_create_company_inbox(self.env.company)
+
+        company_roots = Folder.search([
+            ('parent_folder_id', '=', company_drive.id),
+            ('active', '=', True),
+            ('folder_type', '!=', 'employee'),
+        ], order=order)
+        my_roots = Folder.search([
+            ('parent_folder_id', '=', my_drive.id),
+            ('active', '=', True),
+        ], order=order)
+        all_roots = Folder.search([
+            ('parent_folder_id', '=', False),
+            ('folder_type', '=', 'custom'),
+            ('active', '=', True),
+        ], order=order)
+        shared_ids = [
+            card['id'] for card in self.get_documents_view_folders('shared_with_me')]
+
+        return {
+            'all': build(all_roots),
+            'company': build(company_roots),
+            'my_drive': build(my_roots),
+            'shared_with_me': build(Folder.browse(shared_ids)),
+        }
+
     def _folder_card_values(self, folder, parent):
         return {
             "id": folder.id,
@@ -466,21 +533,41 @@ class DocumentsFolder(models.Model):
 
     @api.model
     def _get_or_create_employee_drive(self, user):
+        """Return the private My Drive of `user`, creating it if needed.
+
+        A My Drive is a ROOT workspace: it must never sit under the Company
+        Drive.  Being a child of the Company Drive made everything a user
+        uploaded to My Drive show up in Company (the Company view lists the
+        content of the Company Drive tree) and made the drive inherit the
+        Company Drive's general access.
+        """
         folder = self.sudo().search([
             ('folder_type', '=', 'employee'),
             ('user_id', '=', user.id),
             ('company_id', '=', user.company_id.id),
         ], limit=1)
         if not folder:
-            company_drive = self._get_or_create_company_drive(user.company_id)
             folder = self.sudo().create({
                 'name': _('%s\'s Drive', user.name),
                 'folder_type': 'employee',
                 'user_id': user.id,
                 'company_id': user.company_id.id,
-                'parent_folder_id': company_drive.id,   # <-- was missing
             })
+        elif folder.parent_folder_id:
+            # Self-heal drives created by older versions under Company Drive.
+            folder.write({'parent_folder_id': False})
         return folder
+
+    @api.model
+    def _detach_employee_drives_from_company(self):
+        """Move every existing My Drive out of the Company Drive tree
+        (used by the upgrade script)."""
+        drives = self.sudo().with_context(active_test=False).search([
+            ('folder_type', '=', 'employee'),
+            ('parent_folder_id', '!=', False),
+        ])
+        drives.write({'parent_folder_id': False})
+        return len(drives)
 
     @api.model
     def _get_or_create_company_drive(self, company):
@@ -511,6 +598,75 @@ class DocumentsFolder(models.Model):
         fallback destination when uploading/creating from a context-less
         screen (All, Recent, Shared with me, Trash)."""
         return self._get_or_create_employee_drive(self.env.user).id
+
+    # ------------------------------------------------------------------
+    # Actions-menu entries (Rename / Move / Copy Links) for workspaces
+    # ------------------------------------------------------------------
+    def action_rename(self, new_name):
+        """'Rename' Actions-menu entry for a workspace."""
+        self.ensure_one()
+        new_name = (new_name or '').strip()
+        if not new_name:
+            raise UserError(_('Please enter a name.'))
+        self.name = new_name
+
+    def action_move(self, folder_id):
+        """'Move' Actions-menu entry: put the workspace under another one."""
+        self.ensure_one()
+        if self.folder_type in ('company', 'employee') or self.is_inbox:
+            raise UserError(_(
+                'The default Company, Inbox and Employee drives cannot be moved.'))
+        target = self.browse(folder_id).exists()
+        if not target:
+            raise UserError(_('Please select a destination workspace.'))
+        if target == self or target.id in self.search(
+                [('id', 'child_of', self.id)]).ids:
+            raise UserError(_(
+                'A workspace cannot be moved into itself or into one of its '
+                'sub-workspaces.'))
+        # The workspace takes the access settings of its new parent.
+        self.write({
+            'parent_folder_id': target.id,
+            'access_internal': 'none',
+            'access_via_link': 'none',
+        })
+
+    def action_create_shortcut(self, destination_folder_id):
+        """'Create Shortcut' Actions-menu entry for a workspace: adds an entry
+        in the destination workspace that opens this workspace."""
+        self.ensure_one()
+        destination = self.browse(destination_folder_id).exists()
+        if not destination:
+            raise UserError(_('Please select a destination workspace.'))
+        if destination == self:
+            raise UserError(_('A workspace cannot contain a shortcut to itself.'))
+        return self.env['documents.document'].create({
+            'name': self.name,
+            'type': 'folder',
+            'folder_id': destination.id,
+            'shortcut_folder_id': self.id,
+        })
+
+    @api.model
+    def get_shortcut_destination_tree(self):
+        """Destinations offered by the 'Create Shortcut' dialog: My Drive and
+        Company first, then the other workspaces, each with its sub-folders.
+        Nodes are ``{id, name, children}``."""
+        tree = self.get_sidebar_folder_tree()
+        my_drive = self._get_or_create_employee_drive(self.env.user)
+        company_drive = self._get_or_create_company_drive(self.env.company)
+        return [
+            {'id': my_drive.id, 'name': _('My Drive'), 'children': tree['my_drive']},
+            {'id': company_drive.id, 'name': _('Company'), 'children': tree['company']},
+        ] + tree['all']
+
+    def action_copy_link(self):
+        """'Copy Links' Actions-menu entry: tokenized share URL of the
+        workspace (same mechanism as for documents)."""
+        self.ensure_one()
+        share = self.env['documents.share']._get_or_create_folder_link_share(self)
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        return f'{base_url.rstrip("/")}/document/share/{share.access_token}'
 
     def unlink(self):
         for folder in self:

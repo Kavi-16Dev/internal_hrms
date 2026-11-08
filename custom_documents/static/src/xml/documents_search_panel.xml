@@ -16,22 +16,71 @@
          All / Company / My Drive / Shared with me / Requests / Inbox / Recent / Trash list
          inserted above the regular Workspaces/Tags sections. -->
     <t t-name="custom_documents.SearchPanel.Regular" t-inherit="web.SearchPanelContent" t-inherit-mode="primary">
+        <!-- Standard "All" empty-state button: our menus replace it. -->
+        <xpath expr="//div[hasclass('o_search_panel_empty_state')]" position="replace"/>
         <xpath expr="//div[hasclass('o_search_panel')]/button" position="after">
             <div class="o_documents_category_panel mb-3">
                 <ul class="list-group d-block o_documents_category_list px-2 px-md-0">
                     <li t-foreach="documentsCategories" t-as="category" t-key="category.id"
                         class="list-group-item border-0 p-0 mb-1"
                         t-attf-class="o_documents_category_item {{ activeDocumentsCategory === category.id ? 'active' : '' }}">
-                        <a href="#"
-                           class="o_documents_category_link d-flex align-items-center px-2 py-1 text-decoration-none rounded"
-                           t-on-click.prevent="() => this.selectDocumentsCategory(category)">
-                            <i t-attf-class="fa {{ category.icon }} o_documents_category_icon me-2"/>
-                            <span class="text-truncate" t-esc="category.label"/>
-                        </a>
+                        <t t-set="categoryTree" t-value="folderTree(category)"/>
+                        <t t-set="categoryExpanded" t-value="isTreeExpanded(category.id, categoryTree)"/>
+                        <div class="o_documents_category_row d-flex align-items-center">
+                            <a href="#"
+                               class="o_documents_category_link flex-grow-1 d-flex align-items-center px-2 py-1 text-decoration-none rounded"
+                               t-on-click.prevent="() => this.selectDocumentsCategory(category)">
+                                <i t-attf-class="fa {{ category.icon }} o_documents_category_icon me-2"/>
+                                <span class="text-truncate" t-esc="category.label"/>
+                            </a>
+                            <button t-if="categoryTree.length" type="button"
+                                    class="btn btn-link btn-sm p-1 o_documents_tree_caret"
+                                    t-on-click.stop="() => this.toggleTree(category.id, categoryTree)">
+                                <i t-attf-class="fa {{ categoryExpanded ? 'fa-caret-down' : 'fa-caret-right' }}"/>
+                            </button>
+                        </div>
+                        <t t-if="categoryTree.length and categoryExpanded">
+                            <t t-call="custom_documents.SidebarTreeNodes">
+                                <t t-set="nodes" t-value="categoryTree"/>
+                                <t t-set="depth" t-value="1"/>
+                                <t t-set="treeCategory" t-value="category"/>
+                            </t>
+                        </t>
                     </li>
                 </ul>
             </div>
         </xpath>
+    </t>
+
+    <!-- Recursive folder tree shown under a sidebar menu. -->
+    <t t-name="custom_documents.SidebarTreeNodes">
+        <ul class="list-unstyled o_documents_tree mb-0">
+            <li t-foreach="nodes" t-as="node" t-key="node.id">
+                <t t-set="nodeKey" t-value="treeCategory.id + ':' + node.id"/>
+                <t t-set="nodeExpanded" t-value="isTreeExpanded(nodeKey, node.children)"/>
+                <div class="o_documents_tree_row d-flex align-items-center rounded"
+                     t-att-class="{'active': activeFolderId === node.id}"
+                     t-attf-style="padding-left: #{depth * 0.9}rem;">
+                    <button t-if="node.children.length" type="button"
+                            class="btn btn-link btn-sm p-0 o_documents_tree_caret"
+                            t-on-click.stop="() => this.toggleTree(nodeKey, node.children)">
+                        <i t-attf-class="fa {{ nodeExpanded ? 'fa-caret-down' : 'fa-caret-right' }}"/>
+                    </button>
+                    <span t-else="" class="o_documents_tree_caret_spacer"/>
+                    <a href="#" class="o_documents_tree_link flex-grow-1 text-truncate text-decoration-none py-1"
+                       t-att-title="node.name"
+                       t-on-click.prevent="() => this.openTreeFolder(node)">
+                        <i class="fa fa-folder-o me-1"/><t t-esc="node.name"/>
+                    </a>
+                </div>
+                <t t-if="node.children.length and nodeExpanded">
+                    <t t-call="custom_documents.SidebarTreeNodes">
+                        <t t-set="nodes" t-value="node.children"/>
+                        <t t-set="depth" t-value="depth + 1"/>
+                    </t>
+                </t>
+            </li>
+        </ul>
     </t>
 
 </templates>

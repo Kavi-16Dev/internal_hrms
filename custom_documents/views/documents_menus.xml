@@ -42,6 +42,9 @@
     <menuitem id="menu_documents_tags" name="Tags" parent="menu_documents_structure"
               action="documents_tag_action" sequence="10"/>
 
+    <menuitem id="menu_documents_groups" name="Groups" parent="menu_documents_structure"
+              action="documents_group_action" sequence="20"/>
+
     <!-- Activities (section header, no action) -->
     <menuitem id="menu_documents_activities" name="Activities" parent="menu_documents_config"
               sequence="40"/>

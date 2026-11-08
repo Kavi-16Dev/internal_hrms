@@ -33,7 +33,7 @@
         <Dialog title="title" size="'sm'">
             <div class="o_documents_new_folder_dialog">
                 <div class="mb-1">
-                    <label class="form-label" for="documents_new_folder_name">Folder Name</label>
+                    <label class="form-label" for="documents_new_folder_name"><t t-esc="nameLabel"/></label>
                     <input id="documents_new_folder_name" type="text" class="form-control"
                            t-model="state.name" placeholder="e.g. Contracts"
                            autofocus=""
@@ -44,7 +44,7 @@
                 <button type="button" class="btn btn-primary"
                         t-att-disabled="isConfirmDisabled"
                         t-on-click="onConfirm">
-                    Create
+                    <t t-esc="confirmLabel"/>
                 </button>
                 <button type="button" class="btn btn-secondary" t-on-click="onDiscard">
                     Discard
@@ -76,6 +76,105 @@
         </Dialog>
     </t>
 
+    <t t-name="custom_documents.ShortcutDialog">
+        <Dialog title="title" size="'lg'">
+            <div class="o_documents_shortcut_dialog">
+                <h5 class="mb-3">Choose a destination</h5>
+                <div class="input-group mb-2 o_documents_shortcut_search">
+                    <input type="text" class="form-control" placeholder="Search..."
+                           t-model="state.search"/>
+                    <button type="button" class="btn btn-outline-secondary"
+                            title="Clear" t-on-click="clearSearch">
+                        <i class="fa fa-eraser"/>
+                    </button>
+                </div>
+                <div class="o_documents_shortcut_tree">
+                    <t t-foreach="visibleTree" t-as="node" t-key="node.id">
+                        <t t-call="custom_documents.ShortcutTreeNode">
+                            <t t-set="depth" t-value="0"/>
+                        </t>
+                    </t>
+                    <div t-if="!visibleTree.length" class="text-muted p-2">No matching folder.</div>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-primary"
+                        t-att-disabled="isActionDisabled"
+                        t-on-click="onConfirm">
+                    <t t-esc="confirmLabel"/>
+                </button>
+                <button type="button" class="btn btn-secondary"
+                        t-att-disabled="isActionDisabled"
+                        t-on-click="onCreateFolder">
+                    <t t-esc="createFolderLabel"/>
+                </button>
+                <button type="button" class="btn btn-secondary" t-on-click="onDiscard">
+                    Discard
+                </button>
+            </t>
+        </Dialog>
+    </t>
+
+    <t t-name="custom_documents.MoveConfirmDialog">
+        <Dialog title="title" size="'md'">
+            <div class="o_documents_move_confirm">
+                <div t-if="state.loading" class="text-muted">Loading...</div>
+                <t t-else="">
+                    <p class="text-warning mb-3">
+                        <i class="fa fa-exclamation-triangle me-1"/>
+                        Moving the document(s) will change their access rights to the following settings:
+                    </p>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Internal Users</span>
+                        <span t-esc="internalRight.label"/>
+                    </div>
+                    <div class="text-muted mb-3" t-esc="internalRight.help"/>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Anyone with the link</span>
+                        <span t-esc="linkRight.label"/>
+                    </div>
+                    <div class="text-muted mb-2" t-esc="linkRight.help"/>
+                </t>
+            </div>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-primary"
+                        t-att-disabled="state.loading or state.isSaving"
+                        t-on-click="onMove">
+                    Move
+                </button>
+                <button type="button" class="btn btn-secondary" t-on-click="onDiscard">
+                    Discard
+                </button>
+            </t>
+        </Dialog>
+    </t>
+
+    <t t-name="custom_documents.ShortcutTreeNode">
+        <t t-set="children" t-value="visibleChildren(node)"/>
+        <div class="o_documents_shortcut_row d-flex align-items-center rounded"
+             t-att-class="{'active': state.selectedId === node.id}"
+             t-attf-style="padding-left: #{depth * 1.2}rem;">
+            <button t-if="children.length" type="button"
+                    class="btn btn-link btn-sm p-0 o_documents_shortcut_caret"
+                    t-on-click.stop="() => this.toggle(node)">
+                <i t-attf-class="fa {{ isExpanded(node) ? 'fa-caret-down' : 'fa-caret-right' }}"/>
+            </button>
+            <span t-else="" class="o_documents_shortcut_caret"/>
+            <a href="#" class="flex-grow-1 text-truncate text-decoration-none py-1 o_documents_shortcut_link"
+               t-on-click.prevent="() => this.select(node)">
+                <i t-attf-class="fa {{ depth === 0 ? 'fa-folder' : 'fa-folder-o' }} me-1"/><t t-esc="node.name"/>
+            </a>
+        </div>
+        <t t-if="children.length and isExpanded(node)">
+            <t t-foreach="children" t-as="child" t-key="child.id">
+                <t t-call="custom_documents.ShortcutTreeNode">
+                    <t t-set="node" t-value="child"/>
+                    <t t-set="depth" t-value="depth + 1"/>
+                </t>
+            </t>
+        </t>
+    </t>
+
     <t t-name="custom_documents.MoveDialog">
         <Dialog title="title" size="'sm'">
             <div class="o_documents_move_dialog">
@@ -103,43 +202,143 @@
         </Dialog>
     </t>
 
+    <t t-name="custom_documents.InfoDialog">
+        <Dialog title="title" size="'md'">
+            <div class="o_documents_info_dialog">
+                <div t-if="state.loading" class="text-muted">Loading...</div>
+                <t t-else="">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Name</label>
+                        <input type="text" class="form-control" t-att-value="state.info.name"
+                               t-on-change="onNameChange"/>
+                    </div>
+                    <t t-if="isFolder">
+                        <div class="mb-2 small">
+                            <span class="text-muted">Parent workspace: </span>
+                            <span t-esc="state.info.parent_folder_id ? state.info.parent_folder_id[1] : '—'"/>
+                        </div>
+                        <div class="mb-2 small">
+                            <span class="text-muted">Documents: </span>
+                            <span t-esc="state.info.document_count"/>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted d-block">Tags</label>
+                            <span t-foreach="state.info.allTags" t-as="tag" t-key="tag.id"
+                                  class="badge me-1 mb-1 o_documents_info_tag"
+                                  t-att-class="{'o_documents_info_tag_selected': isTagSelected(tag.id)}"
+                                  t-on-click="() => this.onToggleTag(tag.id)"
+                                  t-esc="tag.name"/>
+                            <div t-if="!state.info.allTags.length" class="text-muted small">No tags configured.</div>
+                        </div>
+                        <div class="mb-2 small">
+                            <span class="text-muted">Owner: </span>
+                            <span t-esc="state.info.owner_id ? state.info.owner_id[1] : '—'"/>
+                        </div>
+                        <div class="mb-2 small">
+                            <span class="text-muted">Workspace: </span>
+                            <span t-esc="state.info.folder_id ? state.info.folder_id[1] : '—'"/>
+                        </div>
+                        <div class="mb-2 small" t-if="state.info.partner_id">
+                            <span class="text-muted">Contact: </span>
+                            <span t-esc="state.info.partner_id[1]"/>
+                        </div>
+                        <div class="mb-2 small" t-if="state.info.res_name">
+                            <span class="text-muted">Related Record: </span>
+                            <span t-esc="state.info.res_name"/>
+                        </div>
+                        <div class="mb-2 small">
+                            <span class="text-muted">Size: </span>
+                            <span t-esc="formatFileSize(state.info.file_size)"/>
+                        </div>
+                        <div class="mb-2 small" t-if="state.info.lock_uid">
+                            <span class="text-muted">Locked by: </span>
+                            <span t-esc="state.info.lock_uid[1]"/>
+                        </div>
+                    </t>
+                </t>
+            </div>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-secondary" t-on-click="onClose">Close</button>
+            </t>
+        </Dialog>
+    </t>
+
     <t t-name="custom_documents.VersionsDialog">
-        <Dialog title="title" size="'lg'">
+        <Dialog title="dialogTitle" size="'lg'">
             <div class="o_documents_versions_dialog">
                 <div t-if="state.isLoading" class="text-muted p-3">Loading...</div>
-                <div t-elif="!state.versions.length" class="text-muted p-3">
-                    No previous versions yet. A version is saved automatically every time
-                    this file is replaced.
-                </div>
-                <table t-else="" class="table table-sm align-middle">
-                    <thead>
-                        <tr>
-                            <th>File</th>
-                            <th>Date</th>
-                            <th>By</th>
-                            <th>Size</th>
-                            <th/>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr t-foreach="state.versions" t-as="version" t-key="version.id">
-                            <td t-esc="version.name"/>
-                            <td t-esc="version.dateLabel"/>
-                            <td t-esc="version.userName"/>
-                            <td t-esc="formatSize(version.file_size)"/>
-                            <td class="text-end">
-                                <a t-if="version.downloadUrl" t-att-href="version.downloadUrl"
-                                   class="btn btn-sm btn-link" title="Download">
-                                    <i class="fa fa-download"/>
+                <t t-else="">
+                    <button type="button" class="btn btn-secondary mb-3"
+                            t-att-disabled="state.isBusy"
+                            t-on-click="onUploadClick">
+                        Upload New Version
+                    </button>
+                    <input type="file" class="d-none" t-ref="fileInput" t-on-change="onFileChosen"/>
+
+                    <!-- Current version -->
+                    <div t-if="state.current" class="o_documents_version_row o_documents_version_current border-top py-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-grow-1 text-break">
+                                <i t-attf-class="fa {{ state.current.icon }} me-2"/>
+                                <span class="text-muted">Current Version</span>
+                                <span class="ms-1" t-esc="state.current.name"/>
+                                <div class="small">
+                                    <b t-esc="state.current.dateLabel"/>
+                                    <span class="ms-1" t-esc="state.current.user"/>
+                                    <span class="ms-2 text-muted" t-esc="formatSize(state.current.file_size)"/>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-1 ms-3 flex-shrink-0">
+                                <a t-att-href="state.current.downloadUrl" class="btn btn-sm btn-secondary">
+                                    <i class="fa fa-download me-1"/>Download
                                 </a>
-                                <button class="btn btn-sm btn-link"
-                                        t-on-click="() => this.onRestore(version.id)">
-                                    Restore
+                                <button t-if="state.current.can_delete" type="button"
+                                        class="btn btn-sm btn-secondary"
+                                        t-att-disabled="state.isBusy"
+                                        t-on-click="onDeleteCurrent">
+                                    <i class="fa fa-trash me-1"/>Delete
                                 </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Previous versions -->
+                    <div t-foreach="state.versions" t-as="version" t-key="version.id"
+                         class="o_documents_version_row border-top py-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-grow-1 text-break">
+                                <i t-attf-class="fa {{ version.icon }} me-2"/>
+                                <span t-esc="version.name"/>
+                                <div class="small">
+                                    <b t-esc="version.dateLabel"/>
+                                    <span class="ms-1" t-esc="version.user"/>
+                                    <span class="ms-2 text-muted" t-esc="formatSize(version.file_size)"/>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-1 ms-3 flex-shrink-0">
+                                <a t-att-href="version.downloadUrl" class="btn btn-sm btn-secondary">
+                                    <i class="fa fa-download me-1"/>Download
+                                </a>
+                                <button type="button" class="btn btn-sm btn-secondary"
+                                        t-att-disabled="state.isBusy"
+                                        t-on-click="() => this.onRestore(version.id)">
+                                    <i class="fa fa-undo me-1"/>Restore
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary"
+                                        t-att-disabled="state.isBusy"
+                                        t-on-click="() => this.onDeleteVersion(version.id)">
+                                    <i class="fa fa-trash me-1"/>Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div t-if="!state.versions.length" class="border-top pt-3 text-muted small">
+                        No previous versions yet. A version is saved automatically every time
+                        this file is replaced.
+                    </div>
+                </t>
             </div>
             <t t-set-slot="footer">
                 <button type="button" class="btn btn-secondary" t-on-click="onClose">

@@ -10,6 +10,9 @@ export class DocumentsNewFolderDialog extends Component {
     static components = { Dialog };
     static props = {
         parentFolderId: { type: [Number, Boolean], optional: true },
+        title: { type: String, optional: true },
+        nameLabel: { type: String, optional: true },
+        confirmLabel: { type: String, optional: true },
         onSaved: { type: Function, optional: true },
         close: { type: Function, optional: true },
     };
@@ -17,7 +20,9 @@ export class DocumentsNewFolderDialog extends Component {
     setup() {
         this.orm = useService("orm");
         this.notification = useService("notification");
-        this.title = _t("New Folder");
+        this.title = this.props.title || _t("New Folder");
+        this.nameLabel = this.props.nameLabel || _t("Folder Name");
+        this.confirmLabel = this.props.confirmLabel || _t("Create");
         this.state = useState({
             name: "",
             isSaving: false,
@@ -34,14 +39,14 @@ export class DocumentsNewFolderDialog extends Component {
         }
         this.state.isSaving = true;
         try {
-            await this.orm.create("documents.folder", [
+            const createdIds = await this.orm.create("documents.folder", [
                 {
                     name: this.state.name.trim(),
                     parent_folder_id: this.props.parentFolderId || false,
                 },
             ]);
             this.notification.add(_t("Folder created."), { type: "success" });
-            this.props.onSaved && this.props.onSaved();
+            this.props.onSaved && this.props.onSaved(createdIds && createdIds[0]);
             this.props.close();
         } catch (error) {
             this.state.isSaving = false;

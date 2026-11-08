@@ -8,7 +8,7 @@ import { Dropdown } from "@web/core/dropdown/dropdown";
 import { DropdownItem } from "@web/core/dropdown/dropdown_item";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { DocumentsRenameDialog } from "./documents_rename_dialog";
-import { DocumentsMoveDialog } from "./documents_move_dialog";
+import { DocumentsShortcutDialog } from "./documents_shortcut_dialog";
 import { DocumentsVersionsDialog } from "./documents_versions_dialog";
 import { DocumentsSplitPdfDialog } from "./documents_split_pdf_dialog";
 import { DocumentsShareDialog } from "./documents_share_dialog";
@@ -400,17 +400,20 @@ export class DocumentsFileViewer extends Component {
     }
 
     onMove() {
-        this.dialog.add(DocumentsMoveDialog, {
-            documentId: this.record.id,
+        this.dialog.add(DocumentsShortcutDialog, {
+            resId: this.record.id,
+            resModel: "documents.document",
+            name: this.record.name || "",
             mode: "move",
             onDone: () => this.reloadQuietly(),
         });
     }
 
     onCreateShortcut() {
-        this.dialog.add(DocumentsMoveDialog, {
-            documentId: this.record.id,
-            mode: "shortcut",
+        this.dialog.add(DocumentsShortcutDialog, {
+            resId: this.record.id,
+            resModel: "documents.document",
+            name: this.record.name || "",
             onDone: () => this.reloadQuietly(),
         });
     }

@@ -14,6 +14,7 @@ export class DocumentsRenameDialog extends Component {
     static components = { Dialog };
     static props = {
         documentId: { type: Number },
+        resModel: { type: String, optional: true }, // default documents.document
         currentName: { type: String },
         onRenamed: { type: Function, optional: true },
         close: { type: Function, optional: true },
@@ -39,7 +40,7 @@ export class DocumentsRenameDialog extends Component {
         }
         this.state.isSaving = true;
         try {
-            await this.orm.call("documents.document", "action_rename", [
+            await this.orm.call(this.props.resModel || "documents.document", "action_rename", [
                 [this.props.documentId],
                 this.state.name.trim(),
             ]);

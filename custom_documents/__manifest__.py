@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Documents (Community)',
-    'version': '19.0.0.1.8',
-    'category': 'Productivity/Documents',
+    'version': '19.0.0.2.4',
+    'category': 'Producivity/Documents',
     'summary': 'Document management, requests, drives and share links'
                 '- Community Edition equivalent of Odoo Enterprise Documents',
     'description': """
@@ -25,6 +25,10 @@ Odoo Enterprise "Documents" application, built to run on Community Edition:
             'custom_documents/static/src/js/documents_new_folder_dialog.js',
             'custom_documents/static/src/js/documents_rename_dialog.js',
             'custom_documents/static/src/js/documents_move_dialog.js',
+            'custom_documents/static/src/js/documents_info_dialog.js',
+            'custom_documents/static/src/js/documents_move_confirm_dialog.js',
+            'custom_documents/static/src/js/documents_shortcut_dialog.js',
+            'custom_documents/static/src/js/documents_action_menu.js',
             'custom_documents/static/src/js/documents_versions_dialog.js',
             'custom_documents/static/src/js/documents_split_pdf_dialog.js',
             'custom_documents/static/src/js/documents_new_menu.js',
@@ -64,6 +68,7 @@ Odoo Enterprise "Documents" application, built to run on Community Edition:
         'views/documents_folder_views.xml',
         'views/documents_document_views.xml',
         'views/documents_tag_views.xml',
+        'views/documents_group_views.xml',
         'views/documents_share_views.xml',
         'views/documents_request_wizard_views.xml',
         'views/documents_config_settings_views.xml',

@@ -11,6 +11,7 @@ import { useDocumentsNewMenu } from "./documents_new_menu";
 import { useDocumentsFileViewer } from "./documents_file_viewer_hook";
 import { useDocumentsSelectionActions } from "./documents_selection_actions";
 import { DocumentsSelectionBox } from "./documents_selection_box";
+import { useDocumentsActionMenu } from "./documents_action_menu";
 
 export class DocumentsListController extends ListController {
     static template = "custom_documents.ListView";
@@ -36,6 +37,8 @@ export class DocumentsListController extends ListController {
 
         // Download / Share buttons of the selection bar (files and folders).
         this.documentsSelection = useDocumentsSelectionActions(this);
+        // Move to Trash / Rename / Info & tags / Move / Create Shortcut / Copy Links.
+        this.documentsActionMenu = useDocumentsActionMenu(this);
     }
 
     get hasSelectedRecords() {
@@ -128,7 +131,7 @@ export class DocumentsListController extends ListController {
             callback: () => this.onDeleteSelectedRecordsAndFolders(),
         };
 
-        return items;
+        return { ...items, ...(this.documentsActionMenu?.getItems() || {}) };
     }
 
     /**
@@ -204,6 +207,17 @@ export class DocumentsListController extends ListController {
         if (record.data.state === "requested") {
             this.documentsNew.openRequestedUpload(record.resId);
             return;
+        }
+        // A shortcut to a workspace opens that workspace.
+        const shortcutFolder = record.data.shortcut_folder_id;
+        if (shortcutFolder) {
+            const folderId = Array.isArray(shortcutFolder)
+                ? shortcutFolder[0]
+                : shortcutFolder.id || shortcutFolder.resId;
+            const action = await this.orm.call("documents.folder", "action_open_documents", [
+                [folderId],
+            ]);
+            return this.actionService.doAction(action);
         }
         if (this.documentsFileViewer.isPreviewable(record.data)) {
             const opened = this.documentsFileViewer.open(record);

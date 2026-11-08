@@ -15,7 +15,7 @@ export class DocumentsMoveDialog extends Component {
     static components = { Dialog };
     static props = {
         documentId: { type: Number },
-        mode: { type: String }, // 'move' | 'shortcut'
+        mode: { type: String }, // 'move' | 'shortcut' | 'move_folder' (documentId is then a workspace id)
         onDone: { type: Function, optional: true },
         close: { type: Function, optional: true },
     };
@@ -25,6 +25,7 @@ export class DocumentsMoveDialog extends Component {
         this.action = useService("action");
         this.notification = useService("notification");
         this.isShortcut = this.props.mode === "shortcut";
+        this.isFolderMove = this.props.mode === "move_folder";
         this.title = this.isShortcut ? _t("Create Shortcut") : _t("Move");
         this.confirmLabel = this.isShortcut ? _t("Create Shortcut") : _t("Move");
         this.state = useState({
@@ -37,7 +38,9 @@ export class DocumentsMoveDialog extends Component {
             const folders = await this.orm.call("documents.folder", "name_search", ["", []], {
                 limit: 300,
             });
-            this.state.folders = folders.map(([id, display_name]) => ({ id, display_name }));
+            this.state.folders = folders
+                .filter(([id]) => !(this.isFolderMove && id === this.props.documentId))
+                .map(([id, display_name]) => ({ id, display_name }));
         });
     }
 
@@ -52,12 +55,17 @@ export class DocumentsMoveDialog extends Component {
         this.state.isSaving = true;
         try {
             const method = this.isShortcut ? "action_create_shortcut" : "action_move";
-            const result = await this.orm.call("documents.document", method, [
+            const model = this.isFolderMove ? "documents.folder" : "documents.document";
+            const result = await this.orm.call(model, method, [
                 [this.props.documentId],
                 this.state.folderId,
             ]);
             this.notification.add(
-                this.isShortcut ? _t("Shortcut created.") : _t("Document moved."),
+                this.isShortcut
+                    ? _t("Shortcut created.")
+                    : this.isFolderMove
+                    ? _t("Workspace moved.")
+                    : _t("Document moved."),
                 { type: "success" }
             );
             this.props.onDone && this.props.onDone(result);
