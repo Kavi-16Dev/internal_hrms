@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Level Purchase Approval - Odoo v19</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(120deg, #2c7744, #5a3f37);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        header h1 { font-size: 2.4rem; margin-bottom: 10px; }
+        header p { font-size: 1.1rem; max-width: 800px; margin: 0 auto; }
+        .logo { font-size: 3rem; margin-bottom: 20px; }
+        .features {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px; margin-bottom: 40px;
+        }
+        .feature-card {
+            background: white; padding: 25px; border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+        .feature-icon { font-size: 2rem; margin-bottom: 10px; }
+        .feature-card h3 { font-size: 1.3rem; margin-bottom: 10px; color: #2c7744; }
+        .screenshots { margin: 50px 0; }
+        .screenshots h2 {
+            text-align: center; font-size: 2rem;
+            margin-bottom: 30px; color: #2c7744;
+        }
+        .screenshot-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .screenshot-item {
+            background: white; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        .screenshot-img { width: 100%; height: 200px; object-fit: cover; border-bottom: 1px solid #eee; }
+        .screenshot-content { padding: 20px; }
+        .screenshot-content h3 { font-size: 1.1rem; margin-bottom: 8px; color: #2c7744; }
+        .testimonial {
+            background: white; padding: 25px; border-radius: 10px;
+            margin: 40px 0; text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        .testimonial p { font-style: italic; font-size: 1.1rem; margin-bottom: 15px; }
+        .testimonial .author { font-weight: 600; color: #2c7744; }
+        footer {
+            text-align: center; padding: 25px 0; margin-top: 50px;
+            background: linear-gradient(120deg, #2c7744, #5a3f37);
+            color: white; border-radius: 10px;
+        }
+        .footer-logo { font-size: 2rem; margin-bottom: 10px; }
+        .footer-links { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+        .footer-links a { color: white; text-decoration: none; font-size: 0.9rem; }
+        .footer-links a:hover { opacity: 0.8; }
+        @media (max-width: 768px) {
+            .features, .screenshot-grid { grid-template-columns: 1fr; }
+            header h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">✔️</div>
+            <h1>Multi-Level Purchase Approval</h1>
+            <p>Advanced approval workflow management for Odoo v19 with configurable approval groups, levels, and amount thresholds</p>
+        </header>
+
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Approval Groups</h3>
+                <p>Create and configure approval groups with custom hierarchies to match your organizational structure.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3>Amount Thresholds</h3>
+                <p>Set minimum and maximum amount limits for each approval level with automatic routing based on purchase order value.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔗</div>
+                <h3>Multi-Level Workflow</h3>
+                <p>Implement sequential approval processes through configured levels with support for both recommendation and approval stages.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📜</div>
+                <h3>Approval History</h3>
+                <p>Maintain complete audit trail of all approval actions with user comments and timestamps for each step.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔌</div>
+                <h3>Seamless Integration</h3>
+                <p>Fully integrated with standard Odoo purchase workflow while maintaining all native functionality.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚙️</div>
+                <h3>User Management</h3>
+                <p>Assign specific users to each approval level with configurable permissions and access rights.</p>
+            </div>
+        </section>
+
+        <section class="screenshots">
+            <h2>Module Screenshots</h2>
+            <div class="screenshot-grid">
+                <div class="screenshot-item">
+                    <img src="assets/screenshots/1.png" alt="Approval Configuration" class="screenshot-img">
+                    <div class="screenshot-content">
+                        <h3>Approval Configuration</h3>
+                        <p>Set up approval groups with hierarchical levels and amount thresholds.</p>
+                    </div>
+                </div>
+                <div class="screenshot-item">
+                    <img src="assets/screenshots/2.png" alt="Product Form" class="screenshot-img">
+                    <div class="screenshot-content">
+                        <h3>Product Form</h3>
+                        <p>Select approval group directly from the product page.</p>
+                    </div>
+                </div>
+                <div class="screenshot-item">
+                    <img src="assets/screenshots/3.png" alt="Recommend & Return Buttons" class="screenshot-img">
+                    <div class="screenshot-content">
+                        <h3>Recommend & Return Buttons</h3>
+                        <p>New buttons appear after order confirmation for approval workflow.</p>
+                    </div>
+                </div>
+                <div class="screenshot-item">
+                    <img src="assets/screenshots/4.png" alt="Comment Popup" class="screenshot-img">
+                    <div class="screenshot-content">
+                        <h3>Comment Popup</h3>
+                        <p>Popup form for comments when recommending or returning orders.</p>
+                    </div>
+                </div>
+                <div class="screenshot-item">
+                    <img src="assets/screenshots/5.png" alt="Approval Comments" class="screenshot-img">
+                    <div class="screenshot-content">
+                        <h3>Approval Comments</h3>
+                        <p>View complete history of approval comments and actions.</p>
+                    </div>
+                </div>
+                <div class="screenshot-item">
+                    <img src="assets/screenshots/6.png" alt="Approval Button" class="screenshot-img">
+                    <div class="screenshot-content">
+                        <h3>Approval Button</h3>
+                        <p>Approve button appears for authorized users based on thresholds.</p>
+                    </div>
+                </div>
+                <div class="screenshot-item">
+                    <img src="assets/screenshots/7.png" alt="Approved Order" class="screenshot-img">
+                    <div class="screenshot-content">
+                        <h3>Approved Order</h3>
+                        <p>Order status changes to approved after successful completion of workflow.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="testimonial">
+            <p>"The Multi-Level Purchase Approval module has transformed our procurement process. We now have complete control over approvals with a clear audit trail."</p>
+            <p class="author">- Procurement Manager, Manufacturing Company</p>
+        </div>
+
+        <footer>
+            <div class="footer-logo">✔️</div>
+            <p>Multi-Level Purchase Approval for Odoo v19</p>
+            <p>Developed by Zalino Tech Private Limited</p>
+            <div class="footer-links">
+                <a href="#">🌐 Website</a>
+                <a href="#">✉️ Contact</a>
+                <a href="#">📄 Documentation</a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

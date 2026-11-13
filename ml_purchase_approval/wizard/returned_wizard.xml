@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_returned_comment_wizard_form" model="ir.ui.view">
+        <field name="name">ml.returned.comment.wizard.form</field>
+        <field name="model">ml.returned.comment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Please enter the comments or return reasons:">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="purchase_order_id" invisible="0"/>
+                            <field name="approval_level_id" invisible="0"/>
+                            <field name="comment" placeholder="Enter your comments here..." nolabel="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm_with_comment" string="Confirm" type="object" class="btn-primary"/>
+                    <button name="action_cancel_returned_wizard" string="Cancel" type="object" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_returned_comment_wizard" model="ir.actions.act_window">
+        <field name="name">Returned Comments</field>
+        <field name="res_model">ml.returned.comment.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_view_types">form</field>
+    </record>
+</odoo>

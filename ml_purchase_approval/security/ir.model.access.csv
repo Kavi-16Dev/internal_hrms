@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ml_approval_group,ml.approval.group,model_ml_approval_group,purchase.group_purchase_manager,1,1,1,1
+access_ml_approval_level,ml.approval.level,model_ml_approval_level,purchase.group_purchase_manager,1,1,1,1
+access_ml_approval_history,ml.approval.history,model_ml_approval_history,purchase.group_purchase_manager,1,1,0,0
+access_ml_approval_comment_wizard,ml.approval.comment.wizard,model_ml_approval_comment_wizard,purchase.group_purchase_manager,1,1,1,1
+access_ml_returned_comment_wizard,ml.returned.comment.wizard,model_ml_returned_comment_wizard,purchase.group_purchase_manager,1,1,1,1
+
+access_ml_approval_group_user,ml.approval.group,model_ml_approval_group,purchase.group_purchase_user,1,0,0,0
+access_ml_approval_level_user,ml.approval.level,model_ml_approval_level,purchase.group_purchase_user,1,0,0,0
+access_ml_approval_history_user,ml.approval.history,model_ml_approval_history,purchase.group_purchase_user,1,1,1,0
+access_ml_approval_comment_wizard_user,ml.approval.comment.wizard,model_ml_approval_comment_wizard,purchase.group_purchase_user,1,1,1,1
+access_ml_returned_comment_wizard_user,ml.returned.comment.wizard,model_ml_returned_comment_wizard,purchase.group_purchase_user,1,1,1,1
